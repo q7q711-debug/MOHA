@@ -201,8 +201,16 @@
         .report-header { text-align: center; border-bottom: 2px dashed var(--border-strong); padding-bottom: 18px; margin-bottom: 22px; }
         .report-title { font-size: 1.5em; font-weight: bold; color: var(--lensme-primary); margin: 0; }
         .report-subtitle { margin: 8px 0 0; opacity: 0.8; }
-        .kpi-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 22px; }
-        .kpi-card { flex: 0 1 160px; min-width: 140px; max-width: 180px; background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px; text-align: center; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+        @media (max-width: 960px) {
+            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+        }
+        .kpi-card { background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; min-width: 0; }
         .kpi-card .label { font-size: 0.78em; color: #888; margin-bottom: 6px; text-align: center; }
         .kpi-card .num { font-size: 1.2em; font-weight: bold; color: var(--lensme-primary); direction: ltr; text-align: center; unicode-bidi: embed; }
         .kpi-card .sub { font-size: 0.75em; color: #999; margin-top: 4px; text-align: center; }
@@ -315,7 +323,7 @@
         <div class="input-grid">
             <div class="form-group"><label>تارقت الشهر</label><input type="number" id="branchTarget" class="form-control" min="0" step="1" dir="ltr" onchange="refreshReportIfReady()"></div>
         </div>
-        <input type="hidden" id="branchName" value="">
+        <input type="hidden" id="branchName" value="BRANCH">
         <input type="hidden" id="branchOpen" value="">
         <input type="hidden" id="currencyLabel" value="ر.س">
     </div>
@@ -339,7 +347,7 @@
         <h3>الأشهر المجمّعة (<span id="monthsCount">0</span>)</h3>
         <div style="overflow-x:auto;">
             <table style="min-width:800px;margin:0;">
-                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>فواتير</th><th>مرتجعات</th><th>حذف</th></tr></thead>
+                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th><th>مرتجعات</th></tr></thead>
                 <tbody id="monthsTableBody"></tbody>
             </table>
         </div>
@@ -352,6 +360,15 @@
                 <div class="report-subtitle" id="reportSubtitle"></div>
             </div>
             <div class="kpi-grid" id="kpiGrid"></div>
+            <div id="wrapMonthTkt">
+                <h3>TKT &amp; ATV حسب الشهر</h3>
+                <div style="overflow-x:auto;">
+                    <table class="mtd-table" id="monthTktAtvTable" style="min-width:520px;margin:0;">
+                        <thead><tr><th>الشهر</th><th>TKT</th><th>ATV</th></tr></thead>
+                        <tbody id="monthTktAtvBody"></tbody>
+                    </table>
+                </div>
+            </div>
             <div id="wrapWeeks">
                 <h3>مقارنة الأسابيع</h3>
                 <div id="weekCompare"></div>
@@ -800,7 +817,7 @@
         box.innerHTML = '<div class="mtd-ref">من 1 إلى ' + day + ' — كل شهر مقابل الشهر السابق</div>' +
             bars +
             '<div style="overflow-x:auto;margin-top:16px;"><table class="mtd-table" style="min-width:720px;margin:0;"><thead><tr>' +
-            '<th>الشهر</th><th>الفترة</th><th>بعد الخصم</th><th>صافي</th><th>فواتير</th><th>ATV</th><th>مقابل الشهر السابق</th>' +
+            '<th>الشهر</th><th>الفترة</th><th>بعد الخصم</th><th>صافي</th><th>TKT</th><th>ATV</th><th>مقابل الشهر السابق</th>' +
             '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="7" style="color:#999;">لا بيانات</td></tr>') + '</tbody></table></div>';
     }
 
@@ -883,8 +900,8 @@
                 '<td dir="ltr"><strong>' + money(k.net) + '</strong></td>' +
                 '<td dir="ltr" style="color:var(--lensme-primary);font-weight:bold;">' + money(k.netAfterRefund) + '</td>' +
                 '<td dir="ltr">' + num(m.invoices) + '</td>' +
-                '<td dir="ltr">' + num(m.refundCount) + '</td>' +
-                '<td><button type="button" class="btn-danger-ghost" onclick="window.__deleteMonth(\'' + m.key + '\')">حذف</button></td></tr>';
+                '<td dir="ltr">' + (k.atvAfterRefund ? money(k.atvAfterRefund, 1) : '—') + '</td>' +
+                '<td dir="ltr">' + num(m.refundCount) + '</td></tr>';
         }).join('');
     }
 
@@ -904,7 +921,6 @@
         }).join('');
     }
 
-    window.__deleteMonth = function (key) { delete monthsMap[key]; renderMonthsTable(); toast('تم الحذف'); };
     window.__deleteManager = function (id) { managers = managers.filter(function (m) { return m.id !== id; }); renderManagers(); };
 
     function addManager() {
@@ -936,7 +952,7 @@
         if (!raw) { if (!silent) alert('لا يوجد حفظ'); return false; }
         try {
             var data = JSON.parse(raw);
-            $('branchName').value = data.branchName || '';
+            $('branchName').value = data.branchName || 'BRANCH';
             $('branchOpen').value = data.branchOpen || '';
             $('currencyLabel').value = data.currencyLabel || 'ر.س';
             if (data.mtdCompareDay && $('mtdCompareDay')) $('mtdCompareDay').value = data.mtdCompareDay;
@@ -1178,7 +1194,7 @@
 
     function applyBranchFromExcel(storeName, firstKey) {
         if ($('currencyLabel')) $('currencyLabel').value = 'ر.س';
-        if (storeName && $('branchName')) $('branchName').value = storeName;
+        if ($('branchName')) $('branchName').value = 'BRANCH';
         if (firstKey && $('branchOpen')) $('branchOpen').value = firstKey;
     }
 
@@ -1692,6 +1708,7 @@
         return Object.keys(map).map(function (k) {
             var s = map[k];
             s.netAfterRefund = Math.max(0, s.sales - s.refunds);
+            s.atv = s.invoices > 0 ? s.netAfterRefund / s.invoices : 0;
             return s;
         }).sort(function (a, b) {
             if (b.netAfterRefund !== a.netAfterRefund) return b.netAfterRefund - a.netAfterRefund;
@@ -1727,6 +1744,22 @@
             rec.atv = rec.invoices > 0 ? rec.net / rec.invoices : 0;
             return rec;
         }).filter(function (rec) { return rec.net > 0 || rec.refundAmount > 0 || rec.invoices > 0; });
+    }
+
+    function renderMonthTktAtv(list) {
+        var body = $('monthTktAtvBody');
+        var wrap = $('wrapMonthTkt');
+        if (!body || !wrap) return;
+        if (!list.length) {
+            body.innerHTML = '<tr><td colspan="3" style="color:#999;">لا بيانات</td></tr>';
+            return;
+        }
+        body.innerHTML = list.map(function (m) {
+            var k = calcKpis(m);
+            return '<tr><td>' + labelYm(m.key) + '</td>' +
+                '<td dir="ltr">' + num(m.invoices || 0) + '</td>' +
+                '<td dir="ltr">' + (k.atvAfterRefund ? money(k.atvAfterRefund, 1) : '—') + '</td></tr>';
+        }).join('');
     }
 
     function renderWeekCompare(list) {
@@ -1828,7 +1861,7 @@
         var weekCols = singleMonth ? [1, 2, 3, 4, 5].filter(function (w) {
             return lastStaffRows.some(function (s) { return s.weeks[w] > 0; });
         }) : [];
-        var head = '<tr><th>#</th><th>الموظف</th><th>المسمى</th><th>المبيعات</th><th>بعد المرتجع</th><th>فواتير</th>';
+        var head = '<tr><th>#</th><th>الموظف</th><th>المسمى</th><th>المبيعات</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th>';
         weekCols.forEach(function (w) { head += '<th>أسبوع ' + w + '</th>'; });
         head += '<th class="col-personal">التارقت الشخصي</th></tr>';
         $('staffTableHead').innerHTML = head;
@@ -1853,9 +1886,10 @@
                 '<td class="staff-name-cell"><span class="full">' + escapeHtml(s.full) + '</span></td>' +
                 '<td>' + roleSelectHtml(s.key) + '</td>' +
                 '<td dir="ltr">' + money(s.sales) + '</td><td dir="ltr"><strong>' + money(s.netAfterRefund) + '</strong></td>' +
-                '<td dir="ltr">' + num(s.invoices) + '</td>' + weekTds +
+                '<td dir="ltr">' + num(s.invoices) + '</td>' +
+                '<td dir="ltr">' + (s.atv ? money(s.atv, 1) : '—') + '</td>' + weekTds +
                 '<td class="col-personal" dir="ltr">' + (personal ? money(personal) : '—') + '</td></tr>';
-        }).join('') || '<tr><td colspan="8" style="color:#999;">لا أسماء في الملف</td></tr>';
+        }).join('') || '<tr><td colspan="9" style="color:#999;">لا أسماء في الملف</td></tr>';
     }
 
     function toggleStaffPersonal() {
@@ -1979,7 +2013,7 @@
         var list = sortedMonths();
         if (!list.length) { alert('لا توجد بيانات'); return; }
 
-        var branchName = ($('branchName').value || 'الفرع').trim();
+        var branchName = ($('branchName').value || 'BRANCH').trim() || 'BRANCH';
         var open = parseYm($('branchOpen').value);
         var singleMonth = list.length === 1;
         var daysCovered = resolveMtdCompareDay(list).day;
@@ -2000,7 +2034,8 @@
         });
 
         var discPct = sumGross > 0 ? (sumDisc / sumGross) * 100 : 0;
-        var aov = sumQty > 0 ? sumNet / sumQty : 0;
+        var branchAtv = sumInv > 0 ? sumAfterRefund / sumInv : 0;
+        var branchTkt = sumInv;
         var bestFinal = list[0], worstFinal = list[0];
         list.forEach(function (m) {
             var k = calcKpis(m);
@@ -2014,15 +2049,18 @@
 
         var kpiCards = [
             { l: 'المبيعات الصافية', n: money(sumAfterRefund), s: '' },
+            { l: 'TKT', n: num(branchTkt), s: 'عدد الفواتير' },
+            { l: 'ATV', n: branchAtv ? money(branchAtv, 1) : '—', s: 'متوسط الفاتورة' },
             { l: 'المرتجعات', n: money(sumRefAmt), s: num(sumRefCnt) + ' فاتورة' },
             { l: 'الخصومات', n: money(sumDisc), s: pct(discPct) },
             { l: 'التارقت', n: branchTarget ? money(branchTarget) : '—', s: '' },
-            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: '' }
+            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: singleMonth ? labelYm(list[0].key) : 'إجمالي الفترة' }
         ];
         $('kpiGrid').innerHTML = kpiCards.map(function (c) {
             return '<div class="kpi-card"><div class="label">' + c.l + '</div><div class="num">' + c.n + '</div>' + (c.s ? '<div class="sub">' + c.s + '</div>' : '') + '</div>';
         }).join('');
 
+        renderMonthTktAtv(list);
         renderWeekCompare(list);
         if (!singleMonth) renderMtdCompare(list);
         else lastMtdRows = [];
@@ -2069,13 +2107,15 @@
         lastRows = [{
             month: singleMonth ? labelYm(list[0].key) : 'الكل',
             netAfterRefund: sumAfterRefund, discount: sumDisc, refundAmount: sumRefAmt,
-            target: branchTarget, achievePct: achievePct
+            target: branchTarget, achievePct: achievePct,
+            tkt: branchTkt, atv: branchAtv
         }];
         renderProducts(list);
 
         var insights = [
             'صافي المبيعات <b>' + money(sumAfterRefund) + '</b> · مرتجعات <b>' + money(sumRefAmt) + '</b> · خصومات <b>' + money(sumDisc) + '</b>.',
             'التارقت <b>' + (branchTarget ? money(branchTarget) : '—') + '</b> · التحقيق <b>' + (branchTarget ? pct(achievePct) : '—') + '</b> · حتى يوم <b>' + daysCovered + '</b>.',
+            'TKT <b>' + num(branchTkt) + '</b> · ATV الفرع <b>' + (branchAtv ? money(branchAtv, 1) : '—') + '</b> · الفرع <b>' + escapeHtml(branchName) + '</b>.',
             'عدد الموظفين: <b>' + (lastStaffRows.length || 0) + '</b>.'
         ];
         $('insightsList').innerHTML = insights.map(function (x) { return '<li>' + x + '</li>'; }).join('');
@@ -2087,9 +2127,14 @@
 
     function exportExcel() {
         if (!lastRows.length || typeof XLSX === 'undefined') { alert('اعرض التقرير أولاً'); return; }
-        var kpi = [['الفترة','المبيعات الصافية','الخصومات','المرتجعات','التارقت','تحقيق %']];
+        var kpi = [['الفترة','المبيعات الصافية','TKT','ATV','الخصومات','المرتجعات','التارقت','تحقيق %']];
         lastRows.forEach(function (r) {
-            kpi.push([r.month, r.netAfterRefund, r.discount, r.refundAmount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
+            kpi.push([r.month, r.netAfterRefund, r.tkt || 0, r.atv ? +Number(r.atv).toFixed(2) : '', r.discount, r.refundAmount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
+        });
+        var monthTkt = [['الشهر','TKT','ATV']];
+        sortedMonths().forEach(function (m) {
+            var k = calcKpis(m);
+            monthTkt.push([labelYm(m.key), m.invoices || 0, k.atvAfterRefund ? +k.atvAfterRefund.toFixed(2) : '']);
         });
         var cats = [['الشهر','#','الفئة / الصنف','كمية','مبيعات','بعد المرتجع','مرتجعات']];
         lastCategoryRows.forEach(function (r) {
@@ -2097,6 +2142,9 @@
         });
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpi), 'KPI');
+        if (monthTkt.length > 1) {
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthTkt), 'TKT ATV');
+        }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cats), 'Categories');
         if (lastMtdRows.length) {
             var mtd = [['الشهر','الفترة','بعد الخصم','بعد المرتجع','مرتجعات','فواتير','ATV','مقارنة %']];
@@ -2127,13 +2175,13 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wk), 'Weeks');
         }
         if (lastStaffRows.length) {
-            var st = [['#','الموظف','المسمى','مبيعات','بعد المرتجع','فواتير']];
+            var st = [['#','الموظف','المسمى','مبيعات','بعد المرتجع','TKT','ATV']];
             lastStaffRows.forEach(function (s, idx) {
-                st.push([idx + 1, s.full, s.role || '', s.sales, s.netAfterRefund, s.invoices]);
+                st.push([idx + 1, s.full, s.role || '', s.sales, s.netAfterRefund, s.invoices, s.atv ? +s.atv.toFixed(2) : '']);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(st), 'Staff');
         }
-        XLSX.writeFile(wb, (($('branchName').value || 'branch') + '_monthly_kpi.xlsx').replace(/\s+/g, '_'));
+        XLSX.writeFile(wb, (($('branchName').value || 'BRANCH') + '_monthly_kpi.xlsx').replace(/\s+/g, '_'));
     }
 
     window.handleAnyFiles = handleAnyFiles;
