@@ -339,7 +339,7 @@
         <h3>الأشهر المجمّعة (<span id="monthsCount">0</span>)</h3>
         <div style="overflow-x:auto;">
             <table style="min-width:800px;margin:0;">
-                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th><th>مرتجعات</th><th>حذف</th></tr></thead>
+                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th><th>مرتجعات</th></tr></thead>
                 <tbody id="monthsTableBody"></tbody>
             </table>
         </div>
@@ -882,7 +882,7 @@
         $('monthsCount').textContent = String(list.length);
         var body = $('monthsTableBody');
         if (!list.length) {
-            body.innerHTML = '<tr><td colspan="8" style="color:#999;">ارفع الملفات واضغط تحليل</td></tr>';
+            body.innerHTML = '<tr><td colspan="7" style="color:#999;">ارفع الملفات واضغط تحليل</td></tr>';
             return;
         }
         body.innerHTML = list.map(function (m) {
@@ -893,8 +893,7 @@
                 '<td dir="ltr" style="color:var(--lensme-primary);font-weight:bold;">' + money(k.netAfterRefund) + '</td>' +
                 '<td dir="ltr">' + num(m.invoices) + '</td>' +
                 '<td dir="ltr">' + (k.atvAfterRefund ? money(k.atvAfterRefund, 1) : '—') + '</td>' +
-                '<td dir="ltr">' + num(m.refundCount) + '</td>' +
-                '<td><button type="button" class="btn-danger-ghost" onclick="window.__deleteMonth(\'' + m.key + '\')">حذف</button></td></tr>';
+                '<td dir="ltr">' + num(m.refundCount) + '</td></tr>';
         }).join('');
     }
 
@@ -914,7 +913,6 @@
         }).join('');
     }
 
-    window.__deleteMonth = function (key) { delete monthsMap[key]; renderMonthsTable(); toast('تم الحذف'); };
     window.__deleteManager = function (id) { managers = managers.filter(function (m) { return m.id !== id; }); renderManagers(); };
 
     function addManager() {
