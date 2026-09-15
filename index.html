@@ -201,8 +201,16 @@
         .report-header { text-align: center; border-bottom: 2px dashed var(--border-strong); padding-bottom: 18px; margin-bottom: 22px; }
         .report-title { font-size: 1.5em; font-weight: bold; color: var(--lensme-primary); margin: 0; }
         .report-subtitle { margin: 8px 0 0; opacity: 0.8; }
-        .kpi-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 22px; }
-        .kpi-card { flex: 0 1 160px; min-width: 140px; max-width: 180px; background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px; text-align: center; }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+        @media (max-width: 960px) {
+            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+        }
+        .kpi-card { background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; min-width: 0; }
         .kpi-card .label { font-size: 0.78em; color: #888; margin-bottom: 6px; text-align: center; }
         .kpi-card .num { font-size: 1.2em; font-weight: bold; color: var(--lensme-primary); direction: ltr; text-align: center; unicode-bidi: embed; }
         .kpi-card .sub { font-size: 0.75em; color: #999; margin-top: 4px; text-align: center; }
@@ -2041,12 +2049,12 @@
 
         var kpiCards = [
             { l: 'المبيعات الصافية', n: money(sumAfterRefund), s: '' },
-            { l: 'TKT', n: num(branchTkt), s: singleMonth ? labelYm(list[0].key) : 'إجمالي الفترة' },
-            { l: 'ATV', n: branchAtv ? money(branchAtv, 1) : '—', s: 'متوسط الفرع' },
+            { l: 'TKT', n: num(branchTkt), s: 'عدد الفواتير' },
+            { l: 'ATV', n: branchAtv ? money(branchAtv, 1) : '—', s: 'متوسط الفاتورة' },
             { l: 'المرتجعات', n: money(sumRefAmt), s: num(sumRefCnt) + ' فاتورة' },
             { l: 'الخصومات', n: money(sumDisc), s: pct(discPct) },
             { l: 'التارقت', n: branchTarget ? money(branchTarget) : '—', s: '' },
-            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: '' }
+            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: singleMonth ? labelYm(list[0].key) : 'إجمالي الفترة' }
         ];
         $('kpiGrid').innerHTML = kpiCards.map(function (c) {
             return '<div class="kpi-card"><div class="label">' + c.l + '</div><div class="num">' + c.n + '</div>' + (c.s ? '<div class="sub">' + c.s + '</div>' : '') + '</div>';
