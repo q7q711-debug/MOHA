@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magrabi Best Sellers</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --magrabi-primary: #b8892a;
+            --magrabi-gold: #dea537;
+            --magrabi-dark: #333333;
+            --bg-light: #ffffff;
+            --bg-page: #fdfaf9;
+            --color-up: #2ecc71;
+            --color-down: #e74c3c;
+            --border: #f2e8e5;
+            --border-strong: #e8d5d0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-page);
+            margin: 0;
+            padding: 20px;
+            color: var(--magrabi-dark);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .container { max-width: 1280px; margin: auto; }
+        header {
+            background: var(--bg-light);
+            padding: 28px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 22px;
+            box-shadow: 0 8px 20px rgba(184, 137, 42, 0.08);
+            border: 1px solid rgba(184, 137, 42, 0.22);
+        }
+        .logo-container {
+            font-size: 2.6em;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #1e1505;
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+        .logo-line {
+            width: 180px;
+            height: 4px;
+            border-radius: 3px;
+            background: var(--magrabi-primary);
+            margin: 8px auto 0;
+        }
+        header h1 { margin: 12px 0 0; font-size: 1.25em; letter-spacing: 0.4px; }
+        header .sub { color: #888; font-size: 0.92em; margin-top: 8px; }
+        .box {
+            background: var(--bg-light);
+            padding: 26px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            margin-bottom: 22px;
+        }
+        h2 {
+            color: var(--magrabi-primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin: 0 0 18px;
+            font-size: 1.2em;
+        }
+        h3 { color: var(--magrabi-primary); margin: 28px 0 12px; font-size: 1.05em; }
+        .hint { color: #777; font-size: 0.88em; margin: -6px 0 16px; line-height: 1.6; }
+        .file-upload-wrapper {
+            border: 2px dashed var(--magrabi-primary);
+            padding: 28px 14px;
+            border-radius: 10px;
+            text-align: center;
+            background: #fffdf8;
+            cursor: pointer;
+            display: block;
+        }
+        .file-upload-wrapper.has-file { border-color: #27ae60; background: #f6fff8; }
+        .file-upload-wrapper input[type="file"] { display: none; }
+        .upload-title { font-weight: bold; color: var(--magrabi-primary); display: block; font-size: 1.05em; }
+        .upload-hint { font-size: 0.84em; color: #888; margin-top: 6px; display: block; }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            background: var(--magrabi-primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.05em;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 14px;
+        }
+        .btn:hover { background: #9a7322; }
+        .btn-secondary { background: #34495e; }
+        .btn-secondary:hover { background: #2c3e50; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        #reportOutput { display: none; }
+        .report-header { text-align: center; border-bottom: 2px dashed var(--border-strong); padding-bottom: 18px; margin-bottom: 22px; }
+        .report-title {
+            font-family: Georgia, 'Times New Roman', serif;
+            letter-spacing: 3px;
+            font-size: 1.35em;
+            color: #1e1505;
+        }
+        .report-subtitle { color: #777; margin-top: 8px; font-size: 0.92em; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+        .kpi-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            background: #fff;
+            text-align: center;
+            border-top: 3px solid var(--magrabi-gold);
+        }
+        .kpi-card .label { color: #888; font-size: 0.8em; }
+        .kpi-card .num { font-weight: 800; font-size: 1.25em; margin-top: 6px; direction: ltr; }
+        .hero-best {
+            display: grid;
+            grid-template-columns: 72px 1fr auto;
+            gap: 16px;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            background: #fffdf8;
+            margin-top: 18px;
+        }
+        .hero-rank {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: var(--magrabi-primary); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.4em;
+        }
+        .hero-best .brand { color: var(--magrabi-primary); font-weight: 800; font-size: 0.92em; }
+        .hero-best .article { font-size: 1.15em; font-weight: 700; margin-top: 2px; direction: ltr; text-align: left; }
+        .hero-best .meta { color: #888; font-size: 0.82em; margin-top: 4px; }
+        .hero-best .net { font-weight: 800; direction: ltr; font-size: 1.2em; color: #1e1505; }
+        .month-cat-block { border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; background: #fff; overflow: hidden; }
+        .month-cat-block h4 { margin: 0 0 10px; border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.9em; }
+        .cat-rank-table { width: 100%; min-width: 0; margin: 0; font-size: 0.88em; }
+        .cat-rank-table th, .cat-rank-table td { padding: 8px 10px; vertical-align: middle; }
+        .cat-rank-table .col-brand { text-align: right; white-space: nowrap; font-weight: 700; }
+        .cat-rank-table .col-model { direction: ltr; text-align: left; unicode-bidi: embed; white-space: normal; }
+        .cat-rank-table tr.cat-extra.is-hidden { display: none; }
+        .top-sellers-table { margin: 0; }
+        .top-sellers-table .col-cat { text-align: right; font-weight: bold; white-space: nowrap; vertical-align: middle; background: #fffdf8; }
+        .cat-link {
+            background: none; border: none; padding: 0; cursor: pointer;
+            color: var(--magrabi-primary); font: inherit; font-weight: 800;
+            text-decoration: underline;
+        }
+        .cat-link.is-open { color: #1e1505; }
+        .share-bar { height: 8px; background: #f6edd6; border-radius: 6px; overflow: hidden; margin-top: 6px; }
+        .share-fill { height: 100%; background: var(--magrabi-primary); }
+        .brand-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+        .brand-btn {
+            background: #fff; color: var(--magrabi-dark);
+            border: 1px solid var(--border-strong); border-radius: 100px;
+            padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer;
+        }
+        .brand-btn .qty { color: var(--magrabi-primary); margin-inline-start: 6px; direction: ltr; display: inline-block; }
+        .brand-btn.is-open, .brand-btn:hover { background: var(--magrabi-primary); color: #fff; border-color: var(--magrabi-primary); }
+        .brand-btn.is-open .qty, .brand-btn:hover .qty { color: #fff; }
+        .top-sellers-table tr.cat-split td { border-top: 2px solid var(--border); }
+        th, td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--border); }
+        th { background: #fffdf8; color: var(--magrabi-primary); font-weight: bold; font-size: 0.86em; white-space: nowrap; }
+        tr:hover { background: #fffaf3; }
+        .rank-num { display: inline-block; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; background: #f6edd6; color: var(--magrabi-primary); font-weight: bold; font-size: 0.85em; }
+        .rank-num.top1 { background: var(--magrabi-primary); color: #fff; }
+        .model-link { color: var(--magrabi-primary); font-weight: 600; text-decoration: underline; }
+        .model-link:hover { color: #9a7322; }
+        .tint-link {
+            display: inline-block;
+            margin-right: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #fff6df;
+            border: 1px solid var(--magrabi-gold);
+            font-size: 0.78em;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .cat-more-btn {
+            display: inline-block; margin-top: 10px; background: #fff; color: var(--magrabi-primary);
+            border: 1px dashed var(--magrabi-primary); padding: 6px 14px; border-radius: 8px;
+            cursor: pointer; font-family: inherit; font-size: 0.82em; font-weight: bold;
+        }
+        .empty-note {
+            background: #fff8e8;
+            border: 1px solid #f0e0b8;
+            color: #7a6230;
+            border-radius: 8px;
+            padding: 14px 16px;
+            line-height: 1.7;
+        }
+        .footer-signature { text-align: center; margin-top: 40px; padding-top: 16px; color: #aaa; font-size: 0.85em; border-top: 1px dashed var(--border-strong); }
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 18px; border-radius: 8px; display: none; z-index: 99;
+        }
+        @media (max-width: 700px) {
+            .hero-best { grid-template-columns: 1fr; text-align: center; }
+            .hero-rank { margin: 0 auto; }
+            .hero-best .article { text-align: center; }
+        }
+        @media print {
+            @page { size: A4 landscape; margin: 8mm; }
+            body * { visibility: hidden; }
+            #printableReport, #printableReport * { visibility: visible; }
+            #printableReport { position: absolute; left: 0; top: 0; width: 100%; }
+            .hide-on-print, .cat-more-btn { display: none !important; }
+            .cat-rank-table tr.cat-extra.is-hidden { display: table-row !important; }
+            #reportOutput { display: block !important; border: none !important; padding: 0 !important; box-shadow: none !important; }
+            body { background: #fff; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="logo-container">MAGRABi</div>
+        <div class="logo-line"></div>
+        <h1>BEST SELLERS</h1>
+        <div class="sub">الأكثر مبيعاً — البراند واسم الصنف</div>
+    </header>
+
+    <div class="box hide-on-print">
+        <h2>رفع ملف المبيعات</h2>
+        <p class="hint">ارفع Sales Summary (POS). الترتيب حسب الكمية. عمود الأرتيكل هو رقم الصنف (Item Number). الضغط على اسم الصنف يفتح صور قوقل.</p>
+        <label class="file-upload-wrapper" id="zoneSales" for="excelSales">
+            <span class="upload-title">Sales Summary</span>
+            <span class="upload-hint">.xls أو .xlsx — Magrabi Sales Summary Report</span>
+            <input type="file" id="excelSales" accept=".xlsx,.xls,.xml" onchange="handleFile(event)">
+        </label>
+        <button type="button" class="btn" id="analyzeBtn" onclick="analyze()">عرض الأفضل مبيعاً</button>
+    </div>
+
+    <div class="box" id="reportOutput">
+        <div id="printableReport">
+            <div class="report-header">
+                <div class="report-title">MAGRABi BEST SELLERS</div>
+                <div class="report-subtitle" id="reportSubtitle"></div>
+            </div>
+            <div id="emptyState"></div>
+            <div id="resultBody" style="display:none;">
+                <div class="kpi-grid" id="kpiGrid"></div>
+                <div id="heroBest"></div>
+                <h3>التقرير الإداري</h3>
+                <div id="mgmtReport"></div>
+                <button type="button" class="btn brand-toggle hide-on-print" id="brandToggle" onclick="toggleBrandSort()">تصنيف بحسب البراندات</button>
+                <div id="brandPanel" style="display:none;">
+                    <div id="brandButtons"></div>
+                    <div id="brandDetail"></div>
+                </div>
+                <h3>الأفضل من كل المنتجات</h3>
+                <div id="allSellers"></div>
+                <h3>أعلى 3 من كل فئة</h3>
+                <div id="topByCategory"></div>
+                <div id="categoryDetail"></div>
+            </div>
+            <div class="footer-signature">MAGRABi</div>
+            <div class="btn-row hide-on-print">
+                <button class="btn btn-secondary" onclick="window.print()">طباعة (A4)</button>
+                <button class="btn btn-secondary" onclick="exportExcel()">تصدير Excel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+    'use strict';
+
+    var CATEGORY_AR = {
+        'Optical Frames': 'إطارات طبية',
+        'Sunglasses': 'نظارات شمسية',
+        'Clear CL': 'عدسات شفافة',
+        'Colored CL': 'عدسات ملونة',
+        'Finished Lenses': 'عدسات جاهزة',
+        'Contact Lenses': 'عدسات لاصقة',
+        'Solutions': 'محاليل',
+        'Ready Readers': 'نظارات قراءة',
+        'Accessories': 'إكسسوارات',
+        'Service': 'خدمات',
+        'Other': 'أخرى'
+    };
+
+    var pendingRows = null;
+    var pendingName = '';
+    var lastItems = [];
+    var lastMgmt = null;
+    var categoryGroups = [];
+    var openCategoryIdx = -1;
+    var brandGroups = [];
+    var openBrandIdx = -1;
+
+    function $(id) { return document.getElementById(id); }
+
+    function toast(msg) {
+        var el = $('toast');
+        el.textContent = msg;
+        el.style.display = 'block';
+        clearTimeout(toast._t);
+        toast._t = setTimeout(function () { el.style.display = 'none'; }, 2400);
+    }
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, function (c) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+    }
+
+    function money(n) {
+        return (Number(n) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' ر.س';
+    }
+    function num(n) {
+        var v = Number(n) || 0;
+        var d = Math.abs(v - Math.round(v)) < 0.001 ? 0 : 1;
+        return v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+    }
+    function toNumber(v) {
+        if (v == null || v === '') return 0;
+        if (typeof v === 'number') return isFinite(v) ? v : 0;
+        var s = String(v).replace(/,/g, '').replace(/[^\d.\-]/g, '');
+        var n = parseFloat(s);
+        return isFinite(n) ? n : 0;
+    }
+    function catLabel(name) { return CATEGORY_AR[name] || name || 'أخرى'; }
+
+    function googleSearchUrl(text) {
+        var q = String(text || '').trim();
+        return 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(q || 'magrabi');
+    }
+
+    function isOpticalFrame(it) {
+        var full = String((it && it.full) || '').trim();
+        if (/^O\s*;/i.test(full)) return true;
+        var cat = String((it && it.category) || '');
+        return /optical\s*frame|إطارات/i.test(cat) && !/^S\s*;/i.test(full);
+    }
+
+    function tintedQuery(it) {
+        var brand = String((it && it.brand) || '').trim();
+        var full = String((it && it.full) || '').trim();
+        var segs = full.split(';').map(function (p) { return p.trim(); }).filter(Boolean);
+        var tail = segs.length >= 3 ? segs.slice(2).join(' ') : (segs[segs.length - 1] || full);
+        var model = String(tail.split(',')[0] || '').trim();
+        var q = brand && model.toLowerCase().indexOf(brand.toLowerCase()) === 0 ? model : [brand, model].filter(Boolean).join(' ');
+        return (q || full) + ' tinted frame';
+    }
+
+    function tintedLink(it) {
+        if (!isOpticalFrame(it)) return '';
+        return ' <a class="model-link tint-link" href="' + googleSearchUrl(tintedQuery(it)) + '" target="_blank" rel="noopener noreferrer">Tinted</a>';
+    }
+
+    function splitDesc(desc) {
+        var raw = String(desc || '').trim();
+        var parts = raw.split(';').map(function (p) { return p.trim(); });
+        if (parts.length >= 3 && parts[1]) {
+            return { brand: parts[1], article: parts.slice(2).join('; '), full: raw };
+        }
+        if (parts.length === 2 && parts[1]) {
+            return { brand: '', article: parts[1], full: raw };
+        }
+        return { brand: '', article: raw, full: raw };
+    }
+
+    function sheetToRows(wb) {
+        var name = wb.SheetNames[0];
+        var sheet = wb.Sheets[name];
+        return XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+    }
+
+    function cellStr(v) { return v == null ? '' : String(v).trim(); }
+
+    function findHeader(rows) {
+        for (var r = 0; r < rows.length; r++) {
+            var cells = (rows[r] || []).map(cellStr);
+            var joined = cells.join(' ').toLowerCase();
+            if (joined.indexOf('item desc') !== -1 || (joined.indexOf('item number') !== -1 && joined.indexOf('qty') !== -1)) {
+                var idx = { grp: 0, type: 1, item: 5, desc: 6, qty: 10, value: 11, rqty: 12, rval: 15, nqty: 16, nvalue: 17 };
+                cells.forEach(function (c, i) {
+                    var t = c.toLowerCase();
+                    if (t === 'grp' || t.indexOf('group') !== -1) idx.grp = i;
+                    if (t === 'type') idx.type = i;
+                    if (t.indexOf('item number') !== -1 || t === 'sku' || t === 'item') idx.item = i;
+                    if (t.indexOf('item desc') !== -1 || t.indexOf('description') !== -1) idx.desc = i;
+                    if (t === 'qty' || t === 'quantity') idx.qty = i;
+                    if (t === 'value' && joined.indexOf('n.value') === -1) idx.value = i;
+                    if (t === 'r.qty' || t === 'rqty' || t.indexOf('return qty') !== -1) idx.rqty = i;
+                    if (t === 'r.val' || t === 'rval' || t.indexOf('return val') !== -1) idx.rval = i;
+                    if (t === 'n.qty' || t === 'nqty' || t.indexOf('net qty') !== -1) idx.nqty = i;
+                    if (t === 'n.value' || t === 'nvalue' || t.indexOf('net value') !== -1) idx.nvalue = i;
+                    if (t === 'brand' || t.indexOf('ماركة') !== -1) idx.brand = i;
+                });
+                if (joined.indexOf('value') !== -1) {
+                    cells.forEach(function (c, i) {
+                        if (c.toLowerCase() === 'value') idx.value = i;
+                    });
+                }
+                return { row: r, idx: idx };
+            }
+        }
+        return null;
+    }
+
+    function metaFromRows(rows) {
+        var meta = { store: '', title: '', from: '', to: '', empty: false };
+        rows.forEach(function (row) {
+            var cells = (row || []).map(cellStr).filter(Boolean);
+            var line = cells.join(' ').replace(/\s+/g, ' ').trim();
+            if (!line) return;
+            if (/no data found/i.test(line)) meta.empty = true;
+            if (/sales summary/i.test(line)) meta.title = line;
+            if (/\b(ryd|jed|dmm|mkh|store|mall|branch)\b/i.test(line) || /^\d{3,5}\s*-/.test(line)) {
+                if (!meta.store && !/date from|sales summary|item desc|no data/i.test(line)) meta.store = line;
+            }
+        });
+        return meta;
+    }
+
+    function parseMagrabi(rows) {
+        var header = findHeader(rows);
+        var meta = metaFromRows(rows);
+        if (!header) return { meta: meta, items: [], error: 'لم أجد أعمدة Item Desc / QTY في الملف.' };
+        var idx = header.idx;
+        var map = {};
+        var lastGrp = '', lastType = '';
+        for (var r = header.row + 1; r < rows.length; r++) {
+            var row = rows[r] || [];
+            var grp = cellStr(row[idx.grp]);
+            var type = cellStr(row[idx.type]);
+            var itemNo = cellStr(row[idx.item]);
+            var desc = cellStr(row[idx.desc]);
+            if (grp && !/total|sum/i.test(grp)) lastGrp = grp;
+            if (type && !/total|sum/i.test(type)) lastType = type;
+            var qty = toNumber(row[idx.qty]);
+            var value = toNumber(row[idx.value]);
+            var rqty = toNumber(row[idx.rqty]);
+            var rval = toNumber(row[idx.rval]);
+            var nqty = toNumber(row[idx.nqty]);
+            var nvalue = toNumber(row[idx.nvalue]);
+            if (!nqty && (qty || rqty)) nqty = qty - Math.abs(rqty);
+            if (!nvalue && (value || rval)) nvalue = value - Math.abs(rval);
+            var blob = [grp, type, itemNo, desc].join(' ');
+            if (/no data found|grand total|^total\b/i.test(blob)) continue;
+            if (!itemNo && !desc) continue;
+            if (!qty && !value && !nqty && !nvalue && !rqty) continue;
+            var brandCell = idx.brand != null ? cellStr(row[idx.brand]) : '';
+            var parts = splitDesc(desc);
+            var brand = brandCell || parts.brand;
+            var full = parts.full || desc || itemNo;
+            var article = itemNo || parts.article || desc;
+            var category = lastType || lastGrp || 'Other';
+            var key = (category + '|' + brand + '|' + article + '|' + itemNo).toLowerCase();
+            if (!map[key]) {
+                map[key] = {
+                    category: category,
+                    brand: brand,
+                    article: article,
+                    full: full,
+                    itemNo: itemNo,
+                    qty: 0,
+                    sales: 0,
+                    refunds: 0,
+                    rqty: 0,
+                    netQty: 0,
+                    net: 0
+                };
+            }
+            var it = map[key];
+            it.qty += Math.abs(qty) || Math.max(0, nqty);
+            it.sales += value;
+            it.refunds += Math.abs(rval);
+            it.rqty = (it.rqty || 0) + Math.abs(rqty);
+            it.netQty += nqty;
+            it.net += nvalue;
+            if (!it.brand && brand) it.brand = brand;
+            if (!it.article && article) it.article = article;
+            if (!it.full && full) it.full = full;
+        }
+        var items = Object.keys(map).map(function (k) { return map[k]; });
+        items.sort(function (a, b) {
+            if (b.qty !== a.qty) return b.qty - a.qty;
+            return String(a.article).localeCompare(String(b.article));
+        });
+        return { meta: meta, items: items, error: '' };
+    }
+
+    function readFile(file) {
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    var wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+                    resolve(sheetToRows(wb));
+                } catch (err) { reject(err); }
+            };
+            reader.onerror = function () { reject(new Error('تعذّر قراءة الملف')); };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function handleFile(ev) {
+        var file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+        pendingName = file.name;
+        $('zoneSales').classList.add('has-file');
+        readFile(file).then(function (rows) {
+            pendingRows = rows;
+            toast('تم تحميل ' + file.name);
+            analyze();
+        }).catch(function () {
+            pendingRows = null;
+            toast('تعذّر قراءة الملف');
+        });
+    }
+
+    function itemRow(it, rank, extraCls) {
+        var search = googleSearchUrl(it.full || it.article);
+        var top = rank === 1 ? ' top1' : '';
+        return '<tr' + (extraCls || '') + '>' +
+            '<td><span class="rank-num' + top + '">' + rank + '</span></td>' +
+            '<td class="col-brand">' + escapeHtml(it.brand || '—') + '</td>' +
+            '<td class="col-model">' + escapeHtml(it.itemNo || it.article || '—') + '</td>' +
+            '<td class="col-model"><a class="model-link" href="' + search + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.full || '—') + '</a>' + tintedLink(it) + '</td>' +
+            '<td dir="ltr">' + num(it.qty) + '</td>' +
+            '<td dir="ltr">' + money(it.sales) + '</td>' +
+            '<td dir="ltr">' + money(it.net) + '</td></tr>';
+    }
+
+    function mgmtLine(it, rank, tail) {
+        return '<tr><td><span class="rank-num' + (rank === 1 ? ' top1' : '') + '">' + rank + '</span></td>' +
+            '<td class="col-brand">' + escapeHtml(it.brand || '—') + '</td>' +
+            '<td class="col-model">' + escapeHtml(it.itemNo || '—') + '</td>' +
+            '<td class="col-model">' + escapeHtml(it.full || '—') + '</td>' +
+            '<td>' + escapeHtml(catLabel(it.category)) + '</td>' + tail + '</tr>';
+    }
+
+    function mgmtTable(title, body, tailHead) {
+        return '<div class="month-cat-block"><h4>' + title + '</h4>' +
+            '<table class="cat-rank-table"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>القسم</th>' + tailHead + '</tr></thead><tbody>' +
+            (body || '<tr><td colspan="7" style="color:#999;">لا بيانات كافية</td></tr>') + '</tbody></table></div>';
+    }
+
+    function renderManagement(items) {
+        var byRevenue = items.slice().sort(function (a, b) { return (b.net || 0) - (a.net || 0); }).slice(0, 10);
+        var byQty = items.slice().sort(function (a, b) { return (b.qty || 0) - (a.qty || 0); }).slice(0, 10);
+        var slow = items.filter(function (it) { return (it.qty || 0) > 0; }).sort(function (a, b) {
+            if (a.qty !== b.qty) return a.qty - b.qty;
+            return (a.net || 0) - (b.net || 0);
+        }).slice(0, 10);
+        var returns = items.filter(function (it) { return it.sales > 0 && it.refunds > 0; }).map(function (it) {
+            return { it: it, rate: it.refunds / it.sales };
+        }).sort(function (a, b) { return b.rate - a.rate; }).slice(0, 10);
+
+        var cats = {};
+        var order = [];
+        var totalNet = 0, totalQty = 0, totalSales = 0;
+        items.forEach(function (it) {
+            var key = it.category || 'Other';
+            if (!cats[key]) { cats[key] = { sales: 0, net: 0, qty: 0, refunds: 0, items: 0 }; order.push(key); }
+            cats[key].sales += it.sales || 0;
+            cats[key].net += it.net || 0;
+            cats[key].qty += it.qty || 0;
+            cats[key].refunds += it.refunds || 0;
+            cats[key].items += 1;
+            totalNet += it.net || 0;
+            totalQty += it.qty || 0;
+            totalSales += it.sales || 0;
+        });
+        order.sort(function (a, b) { return cats[b].net - cats[a].net; });
+
+        var revBody = byRevenue.map(function (it, i) {
+            return mgmtLine(it, i + 1, '<td dir="ltr">' + money(it.net) + '</td><td dir="ltr">' + num(it.qty) + '</td>');
+        }).join('');
+        var qtyBody = byQty.map(function (it, i) {
+            return mgmtLine(it, i + 1, '<td dir="ltr">' + num(it.qty) + '</td><td dir="ltr">' + money(it.net) + '</td>');
+        }).join('');
+        var slowBody = slow.map(function (it, i) {
+            return mgmtLine(it, i + 1, '<td dir="ltr">' + num(it.qty) + '</td><td dir="ltr">' + money(it.net) + '</td>');
+        }).join('');
+        var retBody = returns.map(function (row, i) {
+            var it = row.it;
+            return mgmtLine(it, i + 1, '<td dir="ltr">' + (row.rate * 100).toFixed(1) + '%</td><td dir="ltr">' + money(it.refunds) + '</td><td dir="ltr">' + money(it.sales) + '</td><td dir="ltr">' + num(it.rqty || 0) + '</td>');
+        }).join('');
+        var distBody = order.map(function (key) {
+            var c = cats[key];
+            var share = totalNet > 0 ? (c.net / totalNet) * 100 : 0;
+            var qShare = totalQty > 0 ? (c.qty / totalQty) * 100 : 0;
+            return '<tr><td class="col-brand">' + escapeHtml(catLabel(key)) +
+                '<div class="share-bar"><div class="share-fill" style="width:' + Math.max(2, share) + '%"></div></div></td>' +
+                '<td dir="ltr">' + num(c.items) + '</td>' +
+                '<td dir="ltr">' + num(c.qty) + '</td><td dir="ltr">' + qShare.toFixed(1) + '%</td>' +
+                '<td dir="ltr">' + money(c.net) + '</td><td dir="ltr">' + share.toFixed(1) + '%</td>' +
+                '<td dir="ltr">' + money(c.refunds) + '</td></tr>';
+        }).join('');
+
+        var serviceNet = 0, productNet = 0;
+        order.forEach(function (key) {
+            if (/service|خدمات/i.test(key)) serviceNet += cats[key].net;
+            else productNet += cats[key].net;
+        });
+        var serviceShare = totalNet > 0 ? (serviceNet / totalNet) * 100 : 0;
+
+        lastMgmt = {
+            byRevenue: byRevenue,
+            byQty: byQty,
+            slow: slow,
+            returns: returns,
+            cats: order.map(function (key) { return { key: key, label: catLabel(key), data: cats[key] }; })
+        };
+
+        return mgmtTable('أعلى 10 أصناف بالإيراد', revBody, '<th>الإيراد الصافي</th><th>كمية</th>') +
+            mgmtTable('أعلى 10 أصناف بالكمية', qtyBody, '<th>كمية</th><th>الإيراد الصافي</th>') +
+            mgmtTable('أقل 10 أصناف حركة', slowBody, '<th>كمية</th><th>الإيراد الصافي</th>') +
+            mgmtTable('أعلى نسبة مرتجعات مقابل المبيعات', retBody, '<th>نسبة المرتجع</th><th>المرتجعات</th><th>المبيعات</th><th>كمية المرتجع</th>') +
+            '<div class="month-cat-block"><h4>توزيع المبيعات حسب القسم</h4>' +
+            '<p class="hint">الخدمات ' + money(serviceNet) + ' (' + serviceShare.toFixed(1) + '%) · باقي الأقسام ' + money(productNet) + ' · إجمالي الصافي ' + money(totalNet) + ' من مبيعات ' + money(totalSales) + '</p>' +
+            '<table class="cat-rank-table"><thead><tr><th>القسم</th><th>أصناف</th><th>كمية</th><th>نسبة الكمية</th><th>الإيراد الصافي</th><th>نسبة الإيراد</th><th>مرتجعات</th></tr></thead><tbody>' +
+            (distBody || '<tr><td colspan="7" style="color:#999;">لا بيانات</td></tr>') + '</tbody></table></div>';
+    }
+
+    function renderBrandButtons(items) {
+        var groups = {};
+        var order = [];
+        items.forEach(function (it) {
+            var key = String(it.brand || '').trim() || '—';
+            if (!groups[key]) { groups[key] = []; order.push(key); }
+            groups[key].push(it);
+        });
+        order.sort(function (a, b) {
+            var qty = function (key) { return groups[key].reduce(function (s, it) { return s + it.qty; }, 0); };
+            return qty(b) - qty(a);
+        });
+        brandGroups = order.map(function (key) {
+            var qty = groups[key].reduce(function (s, it) { return s + it.qty; }, 0);
+            return { key: key, label: key === '—' ? 'بدون براند' : key, items: groups[key], qty: qty };
+        });
+        openBrandIdx = -1;
+        return '<div class="brand-bar">' + brandGroups.map(function (g, i) {
+            return '<button type="button" class="brand-btn" id="brandBtn' + i + '" onclick="openBrand(' + i + ')">' +
+                escapeHtml(g.label) + '<span class="qty">' + num(g.qty) + '</span></button>';
+        }).join('') + '</div>';
+    }
+
+    function openBrand(idx) {
+        var box = $('brandDetail');
+        var prev = document.querySelector('.brand-btn.is-open');
+        if (prev) prev.classList.remove('is-open');
+        if (!box || !brandGroups[idx]) return;
+        if (openBrandIdx === idx) {
+            box.innerHTML = '';
+            openBrandIdx = -1;
+            return;
+        }
+        var g = brandGroups[idx];
+        var rows = g.items.map(function (it, i) { return itemRow(it, i + 1, ''); }).join('');
+        box.innerHTML = '<div class="month-cat-block"><h4>' + escapeHtml(g.label) + ' · ' + g.items.length + ' صنف · كمية ' + num(g.qty) + '</h4>' +
+            '<table class="cat-rank-table"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            rows + '</tbody></table></div>';
+        openBrandIdx = idx;
+        var btn = $('brandBtn' + idx);
+        if (btn) btn.classList.add('is-open');
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderAll(items) {
+        var shown = 12;
+        var rows = items.map(function (it, i) {
+            var cls = i >= shown ? ' class="cat-extra is-hidden"' : '';
+            return itemRow(it, i + 1, cls);
+        }).join('');
+        var more = items.length > shown
+            ? '<button type="button" class="cat-more-btn hide-on-print" onclick="revealNext(\'allTable\', this)">المزيد (' + (items.length - shown) + ')</button>'
+            : '';
+        return '<div class="month-cat-block"><h4>كل الأصناف · مرتبة حسب الكمية</h4>' +
+            '<table class="cat-rank-table" id="allTable"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            rows + '</tbody></table>' + more + '</div>';
+    }
+
+    function renderByCategory(items) {
+        var groups = {};
+        var order = [];
+        items.forEach(function (it) {
+            if (!groups[it.category]) { groups[it.category] = []; order.push(it.category); }
+            groups[it.category].push(it);
+        });
+        order.sort(function (a, b) {
+            var sa = groups[a].reduce(function (s, it) { return s + it.qty; }, 0);
+            var sb = groups[b].reduce(function (s, it) { return s + it.qty; }, 0);
+            return sb - sa;
+        });
+        categoryGroups = order.map(function (cat) {
+            return { key: cat, label: catLabel(cat), items: groups[cat] };
+        });
+        openCategoryIdx = -1;
+        var body = '';
+        order.forEach(function (cat, cIdx) {
+            var top = groups[cat].slice(0, 3);
+            var extra = groups[cat].length - top.length;
+            top.forEach(function (it, i2) {
+                var search = googleSearchUrl(it.full || it.article);
+                body += '<tr' + (i2 === 0 && cIdx ? ' class="cat-split"' : '') + '>';
+                if (i2 === 0) {
+                    body += '<td class="col-cat" rowspan="' + top.length + '">' +
+                        '<button type="button" class="cat-link" id="catBtn' + cIdx + '" onclick="openCategory(' + cIdx + ')">' +
+                        escapeHtml(catLabel(cat)) + (extra > 0 ? ' (' + groups[cat].length + ')' : '') + '</button></td>';
+                }
+                body += '<td><span class="rank-num' + (i2 === 0 ? ' top1' : '') + '">' + (i2 + 1) + '</span></td>' +
+                    '<td class="col-brand">' + escapeHtml(it.brand || '—') + '</td>' +
+                    '<td class="col-model">' + escapeHtml(it.itemNo || it.article || '—') + '</td>' +
+                    '<td class="col-model"><a class="model-link" href="' + search + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.full || '—') + '</a>' + tintedLink(it) + '</td>' +
+                    '<td dir="ltr">' + num(it.qty) + '</td><td dir="ltr">' + money(it.sales) + '</td><td dir="ltr">' + money(it.net) + '</td></tr>';
+            });
+        });
+        if (!body) return '';
+        return '<div class="month-cat-block"><h4>الأكثر مبيعاً — أعلى 3 من كل فئة</h4>' +
+            '<table class="cat-rank-table top-sellers-table"><thead><tr><th>الفئة</th><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            body + '</tbody></table></div>';
+    }
+
+    function openCategory(idx) {
+        var box = $('categoryDetail');
+        var prev = document.querySelector('.cat-link.is-open');
+        if (prev) prev.classList.remove('is-open');
+        if (!box || !categoryGroups[idx]) return;
+        if (openCategoryIdx === idx) {
+            box.innerHTML = '';
+            openCategoryIdx = -1;
+            return;
+        }
+        var g = categoryGroups[idx];
+        var rows = g.items.map(function (it, i) { return itemRow(it, i + 1, ''); }).join('');
+        box.innerHTML = '<div class="month-cat-block"><h4>' + escapeHtml(g.label) + ' · ' + g.items.length + ' صنف · مرتبة حسب الكمية</h4>' +
+            '<table class="cat-rank-table" id="catFullTable"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            rows + '</tbody></table></div>';
+        openCategoryIdx = idx;
+        var btn = $('catBtn' + idx);
+        if (btn) btn.classList.add('is-open');
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function revealNext(tableId, btn) {
+        var table = $(tableId);
+        if (!table) return;
+        var hidden = table.querySelectorAll('tr.cat-extra.is-hidden');
+        var step = Math.min(12, hidden.length);
+        for (var i = 0; i < step; i++) hidden[i].classList.remove('is-hidden');
+        var left = table.querySelectorAll('tr.cat-extra.is-hidden').length;
+        if (!left) btn.style.display = 'none';
+        else btn.textContent = 'المزيد (' + left + ')';
+    }
+
+    function analyze() {
+        if (!pendingRows) { toast('ارفع ملف Sales Summary أولاً'); return; }
+        if (typeof XLSX === 'undefined') { toast('مكتبة Excel لم تُحمَّل'); return; }
+        var parsed = parseMagrabi(pendingRows);
+        lastItems = parsed.items || [];
+        var meta = parsed.meta || {};
+        var bits = [];
+        if (meta.store) bits.push(meta.store);
+        if (pendingName) bits.push(pendingName);
+        bits.push(lastItems.length + ' صنف');
+        $('reportSubtitle').textContent = bits.join(' · ');
+        $('reportOutput').style.display = 'block';
+
+        if (!lastItems.length) {
+            $('resultBody').style.display = 'none';
+            $('emptyState').innerHTML = '<div class="empty-note">الملف وصل، ولا يحتوي أصناف للترتيب.' +
+                (meta.empty ? ' التقرير يقول: <b>No data found.</b>' : '') +
+                (parsed.error ? '<br>' + escapeHtml(parsed.error) : '') +
+                '<br>ارفع Sales Summary فيه Item Number و Item Desc و QTY و N.value.</div>';
+            $('reportOutput').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        $('emptyState').innerHTML = '';
+        $('resultBody').style.display = 'block';
+        var sumNet = 0, sumSales = 0, sumQty = 0, sumRef = 0;
+        lastItems.forEach(function (it) {
+            sumNet += it.net; sumSales += it.sales; sumQty += it.qty; sumRef += it.refunds;
+        });
+        var best = lastItems[0];
+        $('kpiGrid').innerHTML = [
+            { l: 'الصافي', n: money(sumNet) },
+            { l: 'المبيعات', n: money(sumSales) },
+            { l: 'الكمية', n: num(sumQty) },
+            { l: 'المرتجعات', n: money(sumRef) },
+            { l: 'عدد الأصناف', n: String(lastItems.length) }
+        ].map(function (c) {
+            return '<div class="kpi-card"><div class="label">' + c.l + '</div><div class="num">' + c.n + '</div></div>';
+        }).join('');
+        $('heroBest').innerHTML =
+            '<div class="hero-best"><div class="hero-rank">1</div><div><div class="brand">' + escapeHtml(best.brand || '—') +
+            ' · ' + escapeHtml(catLabel(best.category)) + '</div><div class="article">' + escapeHtml(best.itemNo || best.article) +
+            '</div><div class="meta"><a class="model-link" href="' + googleSearchUrl(best.full || best.article) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(best.full || '') + '</a>' + tintedLink(best) + '</div><div class="meta">' + money(best.sales) + '</div></div><div class="net">' + num(best.qty) + '</div></div>';
+        if ($('mgmtReport')) $('mgmtReport').innerHTML = renderManagement(lastItems);
+        if ($('brandButtons')) $('brandButtons').innerHTML = '';
+        if ($('brandDetail')) $('brandDetail').innerHTML = '';
+        if ($('brandPanel')) $('brandPanel').style.display = 'none';
+        $('allSellers').innerHTML = renderAll(lastItems);
+        $('topByCategory').innerHTML = renderByCategory(lastItems);
+        if ($('categoryDetail')) $('categoryDetail').innerHTML = '';
+        $('reportOutput').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function exportExcel() {
+        if (!lastItems.length || typeof XLSX === 'undefined') { toast('اعرض التقرير أولاً'); return; }
+        var aoa = [['#', 'الفئة', 'البراند', 'الأرتيكل', 'اسم الصنف', 'كمية', 'مبيعات', 'مرتجعات', 'صافي']];
+        lastItems.forEach(function (it, i) {
+            aoa.push([i + 1, catLabel(it.category), it.brand, it.itemNo || it.article, it.full || '', it.qty, it.sales, it.refunds, it.net]);
+        });
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Best Sellers');
+        if (lastMgmt) {
+            var rev = [['#', 'البراند', 'الأرتيكل', 'اسم الصنف', 'القسم', 'الإيراد الصافي', 'كمية']];
+            lastMgmt.byRevenue.forEach(function (it, i) { rev.push([i + 1, it.brand, it.itemNo, it.full, catLabel(it.category), it.net, it.qty]); });
+            var qty = [['#', 'البراند', 'الأرتيكل', 'اسم الصنف', 'القسم', 'كمية', 'الإيراد الصافي']];
+            lastMgmt.byQty.forEach(function (it, i) { qty.push([i + 1, it.brand, it.itemNo, it.full, catLabel(it.category), it.qty, it.net]); });
+            var slow = [['#', 'البراند', 'الأرتيكل', 'اسم الصنف', 'القسم', 'كمية', 'الإيراد الصافي']];
+            lastMgmt.slow.forEach(function (it, i) { slow.push([i + 1, it.brand, it.itemNo, it.full, catLabel(it.category), it.qty, it.net]); });
+            var ret = [['#', 'البراند', 'الأرتيكل', 'اسم الصنف', 'القسم', 'نسبة المرتجع %', 'المرتجعات', 'المبيعات']];
+            lastMgmt.returns.forEach(function (row, i) {
+                var it = row.it;
+                ret.push([i + 1, it.brand, it.itemNo, it.full, catLabel(it.category), +(row.rate * 100).toFixed(1), it.refunds, it.sales]);
+            });
+            var dist = [['القسم', 'أصناف', 'كمية', 'مبيعات', 'صافي', 'مرتجعات']];
+            lastMgmt.cats.forEach(function (c) { dist.push([c.label, c.data.items, c.data.qty, c.data.sales, c.data.net, c.data.refunds]); });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rev), 'Top Revenue');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(qty), 'Top Qty');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(slow), 'Slow');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ret), 'Returns');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dist), 'Departments');
+        }
+        XLSX.writeFile(wb, 'Magrabi_Best_Sellers.xlsx');
+    }
+
+    window.handleFile = handleFile;
+    window.analyze = analyze;
+    window.revealNext = revealNext;
+    window.openCategory = openCategory;
+    function toggleBrandSort() {
+        var panel = $('brandPanel');
+        if (!panel) return;
+        var open = panel.style.display !== 'none';
+        if (open) {
+            panel.style.display = 'none';
+            if ($('brandDetail')) $('brandDetail').innerHTML = '';
+            openBrandIdx = -1;
+            var prev = document.querySelector('.brand-btn.is-open');
+            if (prev) prev.classList.remove('is-open');
+            return;
+        }
+        if ($('brandButtons') && !$('brandButtons').innerHTML && lastItems.length) {
+            $('brandButtons').innerHTML = renderBrandButtons(lastItems);
+        }
+        panel.style.display = 'block';
+    }
+
+    window.openBrand = openBrand;
+    window.toggleBrandSort = toggleBrandSort;
+    window.exportExcel = exportExcel;
+    window.__parseRows = parseMagrabi;
+})();
+</script>
+</body>
+</html>

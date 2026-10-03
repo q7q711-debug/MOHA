@@ -1,0 +1,77 @@
+{
+  "name": "MOHA jewelry 5-shot pack",
+  "version": 1,
+  "website_order": [
+    "01-primary-stand",
+    "02-product-full",
+    "03-product-macro",
+    "04-product-angle",
+    "05-lifestyle-abaya"
+  ],
+  "shots": [
+    {
+      "id": "01-primary-stand",
+      "role": "primary",
+      "use": "Website main / PDP hero",
+      "aspect_ratio": "1:1",
+      "prompt": "Luxury e-commerce PRIMARY hero of THIS exact product on a slim matte white jewelry wrist stand / bust. Soft studio light, clean off-white seamless background, product centered, no extra jewelry, no text, no logos."
+    },
+    {
+      "id": "02-product-full",
+      "role": "product-clear",
+      "use": "Full piece, clear view",
+      "aspect_ratio": "1:1",
+      "prompt": "Clear catalog photo of THIS exact product fully visible, graceful layout on white marble, soft window light from the left, shallow depth of field, no hands, no model, no text."
+    },
+    {
+      "id": "03-product-macro",
+      "role": "product-clear",
+      "use": "Detail / stone work",
+      "aspect_ratio": "1:1",
+      "prompt": "Macro close-up of the main motif of THIS exact product on a pure white seamless background. Ultra sharp, even studio light, jewelry e-commerce detail shot, no extra objects, no text."
+    },
+    {
+      "id": "04-product-angle",
+      "role": "product-clear",
+      "use": "Angle showing clasp / construction",
+      "aspect_ratio": "1:1",
+      "prompt": "Clear 45-degree studio photo of THIS exact product on white/light gray seamless background. Show clasp, extender or closure, and full construction. No hands, no props, no text."
+    },
+    {
+      "id": "05-lifestyle-abaya",
+      "role": "lifestyle",
+      "use": "Saudi modest wear context",
+      "aspect_ratio": "3:4",
+      "prompt": "Photorealistic lifestyle crop (chest to hands) of a Saudi woman wearing THIS exact product. Black open abaya (front panels open), black tarha/shayla, a few dark hair strands visible at the hairline. Bracelet/jewelry hand held close to the open abaya fabric. Soft daylight, modest, no logos, no text."
+    }
+  ],
+  "products": [
+    {
+      "slug": "halo-bracelet",
+      "name": "Round halo bracelet",
+      "spec": "Delicate silver / white-gold cable chain. Single round brilliant center stone framed by a pave diamond halo, with pave accent stones on the chain links flanking the halo. Lobster clasp with extender chain.",
+      "reference_images": ["front on white", "on pink jewelry box", "on wrist"],
+      "aspect_ratios": { "01-primary-stand": "1:1", "02-product-full": "1:1", "03-product-macro": "1:1", "04-product-angle": "1:1", "05-lifestyle-abaya": "3:4" }
+    },
+    {
+      "slug": "seven-stone-necklace",
+      "name": "Graduated seven-stone smile necklace",
+      "spec": "White-gold / platinum fine cable chain. Seven round brilliant diamonds in a graduated smile/chevron cluster, largest center stone with three stones stepping down on each side, prong-set. Spring-ring or lobster clasp with extender.",
+      "reference_images": ["on model black neckline", "on pink jewelry bust"],
+      "aspect_ratios": { "01-primary-stand": "1:1", "02-product-full": "1:1", "03-product-macro": "1:1", "04-product-angle": "1:1", "05-lifestyle-abaya": "3:4" }
+    },
+    {
+      "slug": "baguette-halo-bracelet",
+      "name": "Baguette hexagon halo bracelet",
+      "spec": "Delicate white-gold cable chain. Hexagonal/octagonal pave halo around a vertical baguette center stone, with two round bezel-set station diamonds flanking the halo. Lobster clasp with extender.",
+      "reference_images": ["on wrist", "on pink velvet pillow"],
+      "aspect_ratios": { "01-primary-stand": "1:1", "02-product-full": "1:1", "03-product-macro": "1:1", "04-product-angle": "1:1", "05-lifestyle-abaya": "3:4" }
+    }
+  ],
+  "generation_rules": [
+    "Always attach the customer's product photos as reference_image_paths so the piece stays identical.",
+    "Do not redesign the jewelry. Match metal, stones, chain, clasp, and motif.",
+    "Primary image is always the stand shot.",
+    "Save PNG only into product-photos/<slug>/ using the five filenames above. No HTML."
+  ]
+}

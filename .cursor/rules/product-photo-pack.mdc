@@ -1,0 +1,20 @@
+---
+description: 5-shot jewelry photo pack for website PDPs (stand primary, 3 product views, Saudi abaya lifestyle)
+alwaysApply: true
+---
+
+# Jewelry product photo pack
+
+When the user asks for photos of a jewelry product, generate **exactly this 5-shot set**. Use their product photos as `reference_image_paths`. Do not redesign the piece.
+
+Save to `product-photos/<slug>/`:
+
+| File | Role |
+|---|---|
+| `01-primary-stand.png` | **PRIMARY** website hero. Product on a matte white jewelry stand. 1:1 |
+| `02-product-full.png` | Clear full piece on white marble. 1:1 |
+| `03-product-macro.png` | Macro of the motif / stones. White seamless. 1:1 |
+| `04-product-angle.png` | 45° view showing clasp / construction. 1:1 |
+| `05-lifestyle-abaya.png` | Saudi woman, **open black abaya**, **tarha**, a little hair out, jewelry hand close to the abaya. 3:4 |
+
+Save PNG only (no HTML). Prompts live in `product-photos/_pack/shot-pack.json`.

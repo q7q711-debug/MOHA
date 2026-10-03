@@ -201,16 +201,8 @@
         .report-header { text-align: center; border-bottom: 2px dashed var(--border-strong); padding-bottom: 18px; margin-bottom: 22px; }
         .report-title { font-size: 1.5em; font-weight: bold; color: var(--lensme-primary); margin: 0; }
         .report-subtitle { margin: 8px 0 0; opacity: 0.8; }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 22px;
-        }
-        @media (max-width: 960px) {
-            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
-        }
-        .kpi-card { background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; min-width: 0; }
+        .kpi-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 22px; }
+        .kpi-card { flex: 0 1 160px; min-width: 140px; max-width: 180px; background: linear-gradient(135deg, #fffafa, #fdf8f7); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px; text-align: center; }
         .kpi-card .label { font-size: 0.78em; color: #888; margin-bottom: 6px; text-align: center; }
         .kpi-card .num { font-size: 1.2em; font-weight: bold; color: var(--lensme-primary); direction: ltr; text-align: center; unicode-bidi: embed; }
         .kpi-card .sub { font-size: 0.75em; color: #999; margin-top: 4px; text-align: center; }
@@ -270,8 +262,27 @@
         }
         .cat-more-btn:hover { background: #fdf8f7; }
         #staffTable.hide-personal .col-personal { display: none; }
+        .target-input {
+            width: 108px; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: 6px;
+            font-family: inherit; font-size: 0.85em; direction: ltr; text-align: center;
+        }
+        .target-result { font-size: 0.78em; color: #777; margin-top: 4px; }
+        .mix-row { display: grid; grid-template-columns: 150px 1fr 72px 130px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 0.88em; }
+        .mix-track { background: #f0e9e6; height: 14px; border-radius: 8px; overflow: hidden; }
+        .mix-fill { height: 100%; background: var(--lensme-primary); min-width: 2px; }
+        .pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 800px) {
+            .mix-row { grid-template-columns: 1fr; }
+            .pair-grid { grid-template-columns: 1fr; }
+        }
+        .brand-low .rank-num { background: #f8e8e6; color: #a94442; }
         .top-sellers-table { margin: 0; }
         .top-sellers-table .col-cat { text-align: right; font-weight: bold; white-space: nowrap; vertical-align: middle; background: #fdf8f7; }
+        .cat-side-btn {
+            background: none; border: none; color: inherit; font: inherit; font-weight: bold;
+            cursor: pointer; padding: 6px 2px; text-align: right; width: 100%;
+        }
+        .cat-side-btn.is-on { color: var(--lensme-primary); text-decoration: underline; }
         .top-sellers-table tr.cat-split td { border-top: 2px solid var(--border); }
         @media print {
             .cat-rank-table tr.cat-extra.is-hidden { display: table-row !important; }
@@ -303,11 +314,37 @@
         }
         @media print {
             @page { size: A4 landscape; margin: 8mm; }
-            body * { visibility: hidden; }
-            #printableReport, #printableReport * { visibility: visible; }
-            #printableReport { position: absolute; left: 0; top: 0; width: 100%; }
-            .hide-on-print { display: none !important; }
-            #reportOutput { display: block !important; border: none !important; padding: 0 !important; }
+            html, body { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+            header, .hide-on-print, .toast, .cat-more-btn { display: none !important; }
+            .container { max-width: none; margin: 0; }
+            #reportOutput {
+                display: block !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #printableReport { position: static !important; width: auto !important; }
+            #printableReport div { overflow: visible !important; }
+            #staffTable, .mtd-table, .mgr-month-table, .cat-rank-table, table {
+                min-width: 0 !important;
+                width: 100% !important;
+                font-size: 8pt;
+            }
+            th, td { padding: 3px 2px !important; white-space: normal !important; }
+            .cat-rank-table .col-model, .cat-rank-table .col-brand { white-space: normal !important; }
+            .kpi-card, .month-cat-block, .insight-section { break-inside: avoid; }
+            tr, .bar-row { break-inside: avoid; }
+            h3 { break-after: avoid; }
+            thead { display: table-header-group; }
+            .cat-rank-table tr.cat-extra.is-hidden { display: table-row !important; }
+            .role-select, .target-input {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                width: auto !important;
+                appearance: none;
+            }
         }
     </style>
 </head>
@@ -361,7 +398,7 @@
             </div>
             <div class="kpi-grid" id="kpiGrid"></div>
             <div id="wrapMonthTkt">
-                <h3>TKT &amp; ATV حسب الشهر</h3>
+                <h3>TKT &amp; ATV عبر الأشهر</h3>
                 <div style="overflow-x:auto;">
                     <table class="mtd-table" id="monthTktAtvTable" style="min-width:520px;margin:0;">
                         <thead><tr><th>الشهر</th><th>TKT</th><th>ATV</th></tr></thead>
@@ -393,7 +430,11 @@
                 </table>
             </div>
             <h3>الأكثر مبيعاً حسب الفئة والصنف</h3>
+            <div id="categoryMix"></div>
+            <div id="brandExtremes"></div>
+            <div id="coloredLensAnalysis"></div>
             <div id="topSellersWrap"></div>
+            <div id="categoryDetail"></div>
             <div class="view-toggle hide-on-print" id="productsViewToggle"></div>
             <div id="monthCategories"></div>
             <div class="insight-section"><h4>ملخص أداء الفرع</h4><ul id="insightsList"></ul></div>
@@ -414,11 +455,12 @@
     var STORAGE_KEY = 'lensme_branch_monthly_kpi_v3';
     var MONTH_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     var CATEGORY_AR = {
-        'Optical Frames': 'إطارات طبية',
+        'Optical Frames': 'نظارات طبية',
+        'Medical Glasses': 'نظارات طبية',
         'Sunglasses': 'نظارات شمسية',
         'Clear CL': 'عدسات شفافة',
         'Colored CL': 'عدسات ملونة',
-        'Finished Lenses': 'عدسات جاهزة',
+        'Finished Lenses': 'نظارات طبية',
         'LW Lab Lens': 'عدسات جاهزة',
         'LW Ready Made': 'عدسات جاهزة',
         'Solutions': 'محاليل',
@@ -441,6 +483,16 @@
     var lastWeekRows = [];
     var lastExtractedTarget = 0;
     var staffRoles = {};
+    var staffTargets = {};
+    var lastBrandRows = [];
+    var lastColorRows = [];
+    var lastMixInsight = '';
+    var STAFF_CAT_COLS = [
+        { label: 'نظارات طبية', cats: ['Medical Glasses', 'Optical Frames', 'Finished Lenses', 'LW Lab Lens', 'LW Ready Made'], asQty: true },
+        { label: 'نظارات شمسية', cats: ['Sunglasses'], asQty: true },
+        { label: 'عدسات ملونة', cats: ['Colored CL'], asQty: true },
+        { label: 'عدسات طبية', cats: ['Clear CL'] }
+    ];
     var STAFF_ROLES = ['Optician', 'Sales Associate', 'Optometrist'];
     var ROLE_SORT = { 'Optician': 0, 'Sales Associate': 1, 'Optometrist': 2 };
     var ROLE_TARGET_SHARE = {
@@ -452,6 +504,7 @@
     var staffPersonalVisible = false;
     var lastStaffSingleMonth = false;
     var catMoreSeq = 0;
+    var catCatalog = [];
 
     function $(id) { return document.getElementById(id); }
 
@@ -498,8 +551,16 @@
 
     function normalizeCategory(name) {
         var n = String(name || '').trim();
-        if (/lab\s*lens|ready\s*made|عدسات\s*lab|عدسات\s*جاهز/i.test(n)) return 'Finished Lenses';
+        if (/optical\s*frames|إطارات|اطارات/i.test(n)) return 'Medical Glasses';
+        if (/lab\s*lens|ready\s*made|finished\s*lens|عدسات\s*lab|عدسات\s*جاهز/i.test(n)) return 'Medical Glasses';
+        if (n === 'Optical Frames' || n === 'Finished Lenses' || n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Medical Glasses';
         return n || 'Other';
+    }
+
+    function canonicalCategory(name) {
+        var n = normalizeCategory(name);
+        if (n === 'Optical Frames' || n === 'Finished Lenses' || n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Medical Glasses';
+        return n;
     }
 
     function googleSearchUrl(brand, model) {
@@ -817,7 +878,7 @@
         box.innerHTML = '<div class="mtd-ref">من 1 إلى ' + day + ' — كل شهر مقابل الشهر السابق</div>' +
             bars +
             '<div style="overflow-x:auto;margin-top:16px;"><table class="mtd-table" style="min-width:720px;margin:0;"><thead><tr>' +
-            '<th>الشهر</th><th>الفترة</th><th>بعد الخصم</th><th>صافي</th><th>TKT</th><th>ATV</th><th>مقابل الشهر السابق</th>' +
+            '<th>الشهر</th><th>الفترة</th><th>بعد الخصم</th><th>صافي</th><th>فواتير</th><th>ATV</th><th>مقابل الشهر السابق</th>' +
             '</tr></thead><tbody>' + (tableRows || '<tr><td colspan="7" style="color:#999;">لا بيانات</td></tr>') + '</tbody></table></div>';
     }
 
@@ -838,9 +899,28 @@
         };
     }
 
+    function foldCategories(categories) {
+        var out = {};
+        Object.keys(categories || {}).forEach(function (key) {
+            var ck = canonicalCategory(key);
+            if (!out[ck]) out[ck] = { sales: 0, disc: 0, qty: 0, refunds: 0, invoices: 0, refundInvoices: 0, items: {} };
+            var src = categories[key];
+            var dest = out[ck];
+            dest.sales += src.sales || 0;
+            dest.disc += src.disc || 0;
+            dest.qty += src.qty || 0;
+            dest.refunds += src.refunds || 0;
+            dest.invoices += src.invoices || 0;
+            dest.refundInvoices += src.refundInvoices || 0;
+            mergeCatItems(dest, src);
+        });
+        return out;
+    }
+
     function rankCategories(categories) {
-        return Object.keys(categories || {}).map(function (key) {
-            var c = categories[key];
+        var folded = foldCategories(categories);
+        return Object.keys(folded).map(function (key) {
+            var c = folded[key];
             var sales = c.sales || 0;
             var refunds = c.refunds || 0;
             var items = Object.keys(c.items || {}).map(function (nm) {
@@ -852,6 +932,7 @@
                     qty: it.qty || 0,
                     sales: it.sales || 0,
                     refunds: it.refunds || 0,
+                    color: it.color || '',
                     net: Math.max(0, (it.sales || 0) - (it.refunds || 0))
                 };
             }).sort(function (a, b) {
@@ -865,6 +946,9 @@
                 items: items
             };
         }).sort(function (a, b) {
+            var aLast = a.key === 'Solutions';
+            var bLast = b.key === 'Solutions';
+            if (aLast !== bLast) return aLast ? 1 : -1;
             return (b.qty - a.qty) || (b.netAfterRefund - a.netAfterRefund);
         });
     }
@@ -921,6 +1005,7 @@
         }).join('');
     }
 
+    window.__deleteMonth = function (key) { delete monthsMap[key]; renderMonthsTable(); toast('تم الحذف'); };
     window.__deleteManager = function (id) { managers = managers.filter(function (m) { return m.id !== id; }); renderManagers(); };
 
     function addManager() {
@@ -940,9 +1025,9 @@
             currencyLabel: $('currencyLabel').value,
             mtdCompareDay: '',
             branchTarget: $('branchTarget').value,
-            monthsMap: monthsMap,
             managers: managers,
-            staffRoles: staffRoles
+            staffRoles: staffRoles,
+            staffTargets: staffTargets
         }));
         if (!silent) toast('تم الحفظ');
     }
@@ -957,14 +1042,21 @@
             $('currencyLabel').value = data.currencyLabel || 'ر.س';
             if (data.mtdCompareDay && $('mtdCompareDay')) $('mtdCompareDay').value = data.mtdCompareDay;
             if (data.branchTarget != null) $('branchTarget').value = data.branchTarget;
-            monthsMap = data.monthsMap || {};
+            var hadStoredMonths = !!(data.monthsMap && Object.keys(data.monthsMap).length);
+            monthsMap = {};
             managers = data.managers || [];
             staffRoles = {};
             Object.keys(data.staffRoles || {}).forEach(function (k) {
                 staffRoles[k] = normalizeStaffRole(data.staffRoles[k]);
             });
+            staffTargets = {};
+            Object.keys(data.staffTargets || {}).forEach(function (k) {
+                var n = toNumber(data.staffTargets[k]);
+                if (n > 0) staffTargets[k] = n;
+            });
             renderMonthsTable();
             if ($('managerList')) renderManagers();
+            if (hadStoredMonths) saveLocal(true);
             if (!silent) toast('تم الاسترجاع');
             return true;
         } catch (e) { if (!silent) alert('تعذر القراءة'); return false; }
@@ -1036,8 +1128,37 @@
     function emptyStaffRec(ident) {
         return {
             key: ident.key, id: ident.id, name: ident.name, full: ident.full,
-            sales: 0, refunds: 0, qty: 0, _inv: {}, _refundInv: {}, daily: {}
+            sales: 0, refunds: 0, qty: 0, _inv: {}, _refundInv: {}, daily: {}, cats: {}
         };
+    }
+
+    function emptyCatSales() { return { sales: 0, refunds: 0, qty: 0 }; }
+
+    function bumpStaffCat(staff, typeName, qty, total, isRefund) {
+        if (!staff.cats) staff.cats = {};
+        var key = normalizeCategory(typeName);
+        if (!staff.cats[key]) staff.cats[key] = emptyCatSales();
+        var c = staff.cats[key];
+        if (isRefund) c.refunds += Math.abs(total);
+        else { c.sales += total; c.qty += Math.abs(qty); }
+    }
+
+    function mergeStaffCats(target, source) {
+        if (!target.cats) target.cats = {};
+        Object.keys(source || {}).forEach(function (k) {
+            if (!target.cats[k]) target.cats[k] = emptyCatSales();
+            target.cats[k].sales += source[k].sales || 0;
+            target.cats[k].refunds += source[k].refunds || 0;
+            target.cats[k].qty += source[k].qty || 0;
+        });
+    }
+
+    function copyStaffCats(source) {
+        var out = {};
+        Object.keys(source || {}).forEach(function (k) {
+            out[k] = { sales: source[k].sales || 0, refunds: source[k].refunds || 0, qty: source[k].qty || 0 };
+        });
+        return out;
     }
 
     function normalizeStaffRole(val) {
@@ -1096,6 +1217,7 @@
                 Object.keys(sd._inv || {}).forEach(function (inv) { td._inv[inv] = true; });
                 Object.keys(sd._refundInv || {}).forEach(function (inv) { td._refundInv[inv] = true; });
             });
+            mergeStaffCats(t, s.cats);
         });
     }
 
@@ -1280,7 +1402,36 @@
 
     function emptyCat() { return { sales: 0, disc: 0, qty: 0, refunds: 0, _inv: {}, _rinv: {}, items: {} }; }
 
-    function emptyItem() { return { sales: 0, qty: 0, refunds: 0, brand: '', model: '' }; }
+    function emptyItem() { return { sales: 0, qty: 0, refunds: 0, brand: '', model: '', color: '' }; }
+
+    function rawProductColor(parts, brand, model) {
+        function skip(p) {
+            var s = String(p || '').replace(/\s+/g, ' ').trim();
+            if (!s) return true;
+            if (/^\d+(\.\d+)?$/.test(s)) return true;
+            if (/^(o|s|cl|ol|rr|cc|srv|clcp|colored|clear)$/i.test(s)) return true;
+            var compact = s.toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, '');
+            var brandCompact = String(brand || '').toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, '');
+            if (brandCompact && compact === brandCompact) return true;
+            if (/^(lensme|lens me|afle|affle|koreanstyle|korean style)$/.test(s.toLowerCase())) return true;
+            return false;
+        }
+        var direct = String(model || '').replace(/\s+/g, ' ').trim();
+        if (!skip(direct)) return direct;
+        var list = parts || [];
+        for (var i = 0; i < list.length; i++) {
+            if (!skip(list[i])) return String(list[i]).replace(/\s+/g, ' ').trim();
+        }
+        return '';
+    }
+
+    function normalizeClBrand(brand) {
+        var s = String(brand || '').toLowerCase().replace(/[^a-z\u0600-\u06ff]+/g, ' ').trim();
+        if (/lens\s*me|lensme|لينس|لنس/.test(s)) return 'Lensme';
+        if (/afle|affle|أفلي|افلي|افلى/.test(s)) return 'Afle';
+        if (/korean|كوري/.test(s)) return 'Korean Style';
+        return String(brand || '').trim();
+    }
 
     function parseProductParts(typeName, brand, desc, sku) {
         var b = String(brand || '').trim();
@@ -1314,7 +1465,9 @@
         b = b.replace(/^\./, '').trim();
         model = String(model || '').replace(/^\./, '').trim();
         var label = b && model && b.toLowerCase() !== model.toLowerCase() ? (b + ' · ' + model) : (b || model || 'غير محدد');
-        return { brand: b, model: model, label: label };
+        var color = '';
+        if (isColored) color = rawProductColor(parts, b, model);
+        return { brand: b, model: model, label: label, color: color };
     }
 
     function productItemName(typeName, brand, desc, sku) {
@@ -1329,6 +1482,7 @@
         if (extra) {
             if (extra.brand) it.brand = extra.brand;
             if (extra.model) it.model = extra.model;
+            if (extra.color) it.color = extra.color;
         }
         if (isRefund) it.refunds += Math.abs(total);
         else { it.sales += total; it.qty += Math.abs(qty); }
@@ -1343,6 +1497,7 @@
             ac.items[nm].refunds += bc.items[nm].refunds || 0;
             if (bc.items[nm].brand && !ac.items[nm].brand) ac.items[nm].brand = bc.items[nm].brand;
             if (bc.items[nm].model && !ac.items[nm].model) ac.items[nm].model = bc.items[nm].model;
+            if (bc.items[nm].color && !ac.items[nm].color) ac.items[nm].color = bc.items[nm].color;
         });
     }
 
@@ -1422,6 +1577,7 @@
                     rs.refunds += Math.abs(total);
                     rs._refundInv[lookup] = true;
                     rs.qty += Math.abs(qty);
+                    bumpStaffCat(rs, typeName, qty, total, true);
                 }
             } else {
                 month.discount += disc;
@@ -1436,6 +1592,7 @@
                     var ss = ensureStaff(month.staff, staffRaw);
                     ss.qty += Math.abs(qty);
                     if (invoiceRaw) ss._inv[invoiceRaw] = true;
+                    bumpStaffCat(ss, typeName, qty, total, false);
                 }
             }
         });
@@ -1493,10 +1650,12 @@
                 if (!staffOut[sk]) {
                     staffOut[sk] = emptyStaffRec({ key: src.key || sk, id: src.id, name: src.name, full: src.full });
                     staffOut[sk].qty += src.qty || 0;
+                    mergeStaffCats(staffOut[sk], src.cats);
                     Object.keys(src._inv || {}).forEach(function (inv) { staffOut[sk]._inv[inv] = true; });
                     Object.keys(src._refundInv || {}).forEach(function (inv) { staffOut[sk]._refundInv[inv] = true; });
                 } else {
                     staffOut[sk].qty += src.qty || 0;
+                    mergeStaffCats(staffOut[sk], src.cats);
                     if (src.id && !staffOut[sk].id) staffOut[sk].id = src.id;
                     if ((src.full || '').length > (staffOut[sk].full || '').length) {
                         staffOut[sk].full = src.full; staffOut[sk].name = src.name;
@@ -1521,7 +1680,8 @@
                     sales: s.sales || 0, refunds: s.refunds || 0, qty: s.qty || 0,
                     invoices: Object.keys(s._inv || {}).length,
                     refundCount: Object.keys(s._refundInv || {}).length,
-                    daily: dailyStaff
+                    daily: dailyStaff,
+                    cats: copyStaffCats(s.cats)
                 };
             });
             out[key] = normalizeMonthRec({
@@ -1683,7 +1843,7 @@
                 if (!map[sk]) {
                     map[sk] = {
                         key: sk, id: s.id || '', name: s.name || '', full: s.full || s.name || sk,
-                        sales: 0, refunds: 0, invoices: 0, refundCount: 0, qty: 0
+                        sales: 0, refunds: 0, invoices: 0, refundCount: 0, qty: 0, cats: {}
                     };
                 }
                 var t = map[sk];
@@ -1692,6 +1852,7 @@
                 t.invoices += s.invoices || 0;
                 t.refundCount += s.refundCount || 0;
                 t.qty += s.qty || 0;
+                mergeStaffCats(t, s.cats);
                 if (!t.daily) t.daily = {};
                 Object.keys(s.daily || {}).forEach(function (dk) {
                     var sd = s.daily[dk];
@@ -1708,7 +1869,6 @@
         return Object.keys(map).map(function (k) {
             var s = map[k];
             s.netAfterRefund = Math.max(0, s.sales - s.refunds);
-            s.atv = s.invoices > 0 ? s.netAfterRefund / s.invoices : 0;
             return s;
         }).sort(function (a, b) {
             if (b.netAfterRefund !== a.netAfterRefund) return b.netAfterRefund - a.netAfterRefund;
@@ -1824,19 +1984,45 @@
         if (list.length) renderStaffReport(list, list.length === 1, false);
     }
 
-    function staffPersonalTarget(role, counts, branchTarget) {
-        if (!branchTarget || !role || !ROLE_TARGET_SHARE[role]) return 0;
-        var n = counts[role] || 0;
-        if (!n) return 0;
-        return (branchTarget * ROLE_TARGET_SHARE[role]) / n;
+    function jsAttr(s) {
+        return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
     }
 
-    function roleCounts(staff) {
-        var counts = { 'Optician': 0, 'Sales Associate': 0, 'Optometrist': 0 };
-        staff.forEach(function (s) {
-            if (counts[s.role] != null) counts[s.role]++;
+    function staffCatNet(staff, names) {
+        var sales = 0, refunds = 0;
+        names.forEach(function (name) {
+            var c = (staff.cats || {})[name];
+            if (!c) return;
+            sales += c.sales || 0;
+            refunds += c.refunds || 0;
         });
-        return counts;
+        return Math.max(0, sales - refunds);
+    }
+
+    function staffCatQty(staff, names) {
+        var qty = 0;
+        names.forEach(function (name) {
+            var c = (staff.cats || {})[name];
+            if (c) qty += c.qty || 0;
+        });
+        return qty;
+    }
+
+    function assignPersonalTargets(staff, branchTarget) {
+        var manualSum = 0;
+        var open = [];
+        staff.forEach(function (s) {
+            var manual = toNumber(staffTargets[s.key]);
+            s.manualTarget = manual > 0 ? manual : 0;
+            if (s.manualTarget) manualSum += s.manualTarget;
+            else open.push(s);
+        });
+        var remain = Math.max(0, (branchTarget || 0) - manualSum);
+        var share = open.length ? remain / open.length : 0;
+        staff.forEach(function (s) {
+            s.monthlyTarget = s.manualTarget || share;
+        });
+        return { manualSum: manualSum, remain: remain, share: share, openCount: open.length };
     }
 
     function renderStaffReport(list, singleMonth, resetPersonal) {
@@ -1855,53 +2041,67 @@
             return b.netAfterRefund - a.netAfterRefund;
         });
         lastStaffSingleMonth = !!singleMonth;
-        if (resetPersonal !== false || !singleMonth) staffPersonalVisible = !!singleMonth;
+        if (resetPersonal !== false) staffPersonalVisible = true;
         var branchTarget = toNumber($('branchTarget').value) || lastExtractedTarget || 0;
-        var counts = roleCounts(lastStaffRows);
+        var split = assignPersonalTargets(lastStaffRows, branchTarget);
+        var monthCount = Math.max(1, list.length);
         var weekCols = singleMonth ? [1, 2, 3, 4, 5].filter(function (w) {
             return lastStaffRows.some(function (s) { return s.weeks[w] > 0; });
         }) : [];
-        var head = '<tr><th>#</th><th>الموظف</th><th>المسمى</th><th>المبيعات</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th>';
+        var head = '<tr><th>#</th><th>الموظف</th><th>المسمى</th><th>المبيعات</th><th>فواتير</th><th>متوسط الفاتورة</th>';
+        STAFF_CAT_COLS.forEach(function (col) { head += '<th>' + col.label + '</th>'; });
         weekCols.forEach(function (w) { head += '<th>أسبوع ' + w + '</th>'; });
         head += '<th class="col-personal">التارقت الشخصي</th></tr>';
         $('staffTableHead').innerHTML = head;
 
         var bar = $('staffTargetBar');
         if (bar) {
-            if (singleMonth) {
-                bar.innerHTML = '<button type="button" class="btn-ghost" onclick="toggleStaffPersonal()">' +
-                    (staffPersonalVisible ? 'إخفاء التارقت الشخصي' : 'إظهار التارقت الشخصي') + '</button>' +
-                    '<span class="hint">Optician 45% · Sales 35% · Optometrist 25%</span>';
-            } else {
-                bar.innerHTML = '';
-            }
+            var splitNote = branchTarget
+                ? ('تارقت الفرع ' + money(branchTarget) + ' · المحدد يدوياً ' + money(split.manualSum) + ' · المتبقي ' + money(split.remain) +
+                    (split.openCount ? (' يُقسّم على ' + split.openCount + ' = ' + money(split.share)) : ''))
+                : 'أدخل تارقت الفرع ثم حدّد تارقت من تشاء بالريال، والمتبقي يُقسّم على الباقين';
+            bar.innerHTML = '<button type="button" class="btn-ghost" onclick="toggleStaffPersonal()">' +
+                (staffPersonalVisible ? 'إخفاء التارقت الشخصي' : 'إظهار التارقت الشخصي') + '</button>' +
+                '<span class="hint">' + splitNote + '</span>';
         }
         $('staffTable').classList.toggle('hide-personal', !staffPersonalVisible);
 
+        var colSpan = 6 + STAFF_CAT_COLS.length + weekCols.length + 1;
         $('staffTable').querySelector('tbody').innerHTML = lastStaffRows.map(function (s, idx) {
-            var personal = staffPersonalTarget(s.role, counts, branchTarget);
-            s.personalTarget = personal;
+            s.personalTarget = (s.monthlyTarget || 0) * monthCount;
+            var achieve = s.personalTarget ? (s.netAfterRefund / s.personalTarget) * 100 : null;
+            var catTds = STAFF_CAT_COLS.map(function (col) {
+                if (col.asQty) return '<td dir="ltr"><strong>' + num(staffCatQty(s, col.cats)) + '</strong></td>';
+                return '<td dir="ltr">' + money(staffCatNet(s, col.cats)) + '</td>';
+            }).join('');
             var weekTds = weekCols.map(function (w) { return '<td dir="ltr">' + money(s.weeks[w] || 0) + '</td>'; }).join('');
+            var manualVal = s.manualTarget ? String(Math.round(s.manualTarget)) : '';
             return '<tr><td>' + (idx + 1) + '</td>' +
                 '<td class="staff-name-cell"><span class="full">' + escapeHtml(s.full) + '</span></td>' +
                 '<td>' + roleSelectHtml(s.key) + '</td>' +
-                '<td dir="ltr">' + money(s.sales) + '</td><td dir="ltr"><strong>' + money(s.netAfterRefund) + '</strong></td>' +
+                '<td dir="ltr"><strong>' + money(s.netAfterRefund) + '</strong></td>' +
                 '<td dir="ltr">' + num(s.invoices) + '</td>' +
-                '<td dir="ltr">' + (s.atv ? money(s.atv, 1) : '—') + '</td>' + weekTds +
-                '<td class="col-personal" dir="ltr">' + (personal ? money(personal) : '—') + '</td></tr>';
-        }).join('') || '<tr><td colspan="9" style="color:#999;">لا أسماء في الملف</td></tr>';
+                '<td dir="ltr">' + (s.invoices ? money(s.netAfterRefund / s.invoices) : '—') + '</td>' + catTds + weekTds +
+                '<td class="col-personal"><input type="number" class="target-input" min="0" step="1" placeholder="المتبقي" value="' + manualVal + '" onchange="setStaffTarget(\'' + jsAttr(s.key) + '\', this.value)">' +
+                '<div class="target-result">التارقت ' + (s.personalTarget ? money(s.personalTarget) : '—') +
+                (monthCount > 1 && s.monthlyTarget ? ' · شهري ' + money(s.monthlyTarget) : '') +
+                (achieve != null ? ' · ' + pct(achieve) : '') + '</div></td></tr>';
+        }).join('') || '<tr><td colspan="' + colSpan + '" style="color:#999;">لا أسماء في الملف</td></tr>';
+    }
+
+    function setStaffTarget(key, value) {
+        var n = toNumber(value);
+        if (n > 0) staffTargets[key] = n;
+        else delete staffTargets[key];
+        saveLocal(true);
+        var list = sortedMonths();
+        if (list.length) renderStaffReport(list, list.length === 1, false);
     }
 
     function toggleStaffPersonal() {
-        if (!lastStaffSingleMonth) return;
         staffPersonalVisible = !staffPersonalVisible;
-        $('staffTable').classList.toggle('hide-personal', !staffPersonalVisible);
-        var bar = $('staffTargetBar');
-        if (bar) {
-            bar.innerHTML = '<button type="button" class="btn-ghost" onclick="toggleStaffPersonal()">' +
-                (staffPersonalVisible ? 'إخفاء التارقت الشخصي' : 'إظهار التارقت الشخصي') + '</button>' +
-                '<span class="hint">Optician 45% · Sales 35% · Optometrist 25%</span>';
-        }
+        var list = sortedMonths();
+        if (list.length) renderStaffReport(list, list.length === 1, false);
     }
 
     function mergeAllCategories(list) {
@@ -1955,15 +2155,41 @@
         }
     }
 
+    function fullItemsTable(items) {
+        var rows = (items || []).map(function (it, i) {
+            var searchQ = googleSearchUrl(it.brand, it.model || it.name);
+            return '<tr><td>' + (i + 1) + '</td><td class="col-brand">' + escapeHtml(it.brand || '—') + '</td>' +
+                '<td class="col-model"><a class="model-link" href="' + searchQ + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.model || it.name) + '</a></td>' +
+                '<td dir="ltr">' + num(it.qty, 1) + '</td><td dir="ltr">' + money(it.sales) + '</td><td dir="ltr">' + money(it.net) + '</td></tr>';
+        }).join('');
+        return '<table class="cat-rank-table"><thead><tr><th>#</th><th>البراند</th><th>الموديل</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            (rows || '<tr><td colspan="6" style="color:#999;">لا أصناف</td></tr>') + '</tbody></table>';
+    }
+
+    function showCategoryProducts(idx) {
+        var c = catCatalog[idx];
+        var box = $('categoryDetail');
+        if (!c || !box) return;
+        var buttons = document.querySelectorAll('.cat-side-btn');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', Number(buttons[i].getAttribute('data-idx')) === idx);
+        }
+        box.innerHTML = '<div class="month-cat-block"><h4>' + escapeHtml(c.label) + ' · كل المنتجات · كمية ' + num(c.qty, 1) + '</h4>' +
+            fullItemsTable(c.items) + '</div>';
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function topSellersHtml(ranked, title) {
         var body = '';
         ranked.forEach(function (c, cIdx) {
             var top = (c.items || []).slice(0, 3);
             if (!top.length) return;
+            var catIdx = catCatalog.length;
+            catCatalog.push(c);
             top.forEach(function (it, i2) {
                 var searchQ = googleSearchUrl(it.brand, it.model || it.name);
                 body += '<tr' + (i2 === 0 && cIdx ? ' class="cat-split"' : '') + '>';
-                if (i2 === 0) body += '<td class="col-cat" rowspan="' + top.length + '">' + escapeHtml(c.label) + '</td>';
+                if (i2 === 0) body += '<td class="col-cat" rowspan="' + top.length + '"><button type="button" class="cat-side-btn" data-idx="' + catIdx + '" onclick="showCategoryProducts(' + catIdx + ')">' + escapeHtml(c.label) + '</button></td>';
                 body += '<td><span class="rank-num' + (i2 === 0 ? ' top1' : '') + '">' + (i2 + 1) + '</span></td>' +
                     '<td class="col-brand">' + escapeHtml(it.brand || '—') + '</td>' +
                     '<td class="col-model"><a class="model-link" href="' + searchQ + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(it.model || it.name) + '</a></td>' +
@@ -1976,9 +2202,136 @@
             body + '</tbody></table></div>';
     }
 
+    function topBottomRows(list, n, keyName) {
+        var top = list.slice(0, n);
+        var used = {};
+        top.forEach(function (row) { used[row[keyName]] = true; });
+        var bottom = list.filter(function (row) { return !used[row[keyName]]; })
+            .slice().sort(function (a, b) { return (a.qty - b.qty) || (a.net - b.net); })
+            .slice(0, n);
+        return { top: top, bottom: bottom };
+    }
+
+    function aggregateBy(items, field, foldCase) {
+        var map = {};
+        (items || []).forEach(function (it) {
+            var name = String(it[field] || '').trim() || (field === 'color' ? '' : 'بدون ماركة');
+            if (!name) return;
+            var key = foldCase ? name.toLowerCase() : name;
+            if (!map[key]) map[key] = { name: name, sales: 0, refunds: 0, qty: 0, net: 0, _qty: 0 };
+            var row = map[key];
+            if (foldCase && (it.qty || 0) >= row._qty) { row.name = name; row._qty = it.qty || 0; }
+            row.sales += it.sales || 0;
+            row.refunds += it.refunds || 0;
+            row.qty += it.qty || 0;
+            row.net += it.net || 0;
+        });
+        return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) {
+            return (b.qty - a.qty) || (b.net - a.net);
+        });
+    }
+
+    function extremeTable(rows, title, low) {
+        if (!rows.length) return '<div style="color:#999;font-size:0.86em;">لا بيانات</div>';
+        var body = rows.map(function (r, i) {
+            return '<tr><td><span class="rank-num' + (low ? '' : (i === 0 ? ' top1' : '')) + '">' + (i + 1) + '</span></td>' +
+                '<td class="col-brand">' + escapeHtml(r.name) + '</td>' +
+                '<td dir="ltr">' + num(r.qty, 1) + '</td><td dir="ltr">' + money(r.net) + '</td></tr>';
+        }).join('');
+        return '<div><h4 style="margin:0 0 8px;font-size:0.95em;">' + escapeHtml(title) + '</h4>' +
+            '<table class="cat-rank-table"><thead><tr><th>#</th><th>الاسم</th><th>كمية</th><th>صافي</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+    }
+
+    function renderCategoryMix(ranked) {
+        var box = $('categoryMix');
+        if (!box) return;
+        var total = ranked.reduce(function (a, c) { return a + (c.netAfterRefund || 0); }, 0);
+        if (!ranked.length || !total) {
+            box.innerHTML = '';
+            lastMixInsight = '';
+            return;
+        }
+        var rows = ranked.map(function (c) {
+            var share = total > 0 ? (c.netAfterRefund / total) * 100 : 0;
+            return '<div class="mix-row"><div>' + escapeHtml(c.label) + '</div>' +
+                '<div class="mix-track"><div class="mix-fill" style="width:' + Math.max(0, Math.min(100, share)) + '%;"></div></div>' +
+                '<div dir="ltr">' + pct(share) + '</div><div dir="ltr">' + money(c.netAfterRefund) + '</div></div>';
+        }).join('');
+        box.innerHTML = '<div class="month-cat-block"><h4>نسبة كل فئة من إجمالي المبيعات</h4>' + rows + '</div>';
+        var top = ranked.slice(0, 4).map(function (c) {
+            return c.label + ' ' + pct(total ? (c.netAfterRefund / total) * 100 : 0);
+        }).join(' · ');
+        lastMixInsight = 'توزيع المبيعات: <b>' + top + '</b>.';
+    }
+
+    function renderBrandExtremes(ranked) {
+        var box = $('brandExtremes');
+        if (!box) return;
+        lastBrandRows = [];
+        var groups = [
+            { key: 'Medical Glasses', title: 'الطبي' },
+            { key: 'Sunglasses', title: 'الشمسي' }
+        ];
+        var html = groups.map(function (g) {
+            var cat = null;
+            ranked.forEach(function (c) { if (c.key === g.key) cat = c; });
+            var brands = aggregateBy(cat ? cat.items : [], 'brand');
+            var ends = topBottomRows(brands, 5, 'name');
+            ends.top.forEach(function (r, i) { lastBrandRows.push({ group: g.title, side: 'أعلى', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            ends.bottom.forEach(function (r, i) { lastBrandRows.push({ group: g.title, side: 'أقل', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            return '<div class="month-cat-block"><h4>ماركات ' + g.title + '</h4><div class="pair-grid">' +
+                extremeTable(ends.top, 'أعلى 5 مبيعاً', false) +
+                extremeTable(ends.bottom, 'أقل 5 مبيعاً', true) +
+                '</div></div>';
+        }).join('');
+        box.innerHTML = html;
+    }
+
+    function renderColoredLensAnalysis(ranked) {
+        var box = $('coloredLensAnalysis');
+        if (!box) return;
+        lastColorRows = [];
+        var cat = null;
+        ranked.forEach(function (c) { if (c.key === 'Colored CL') cat = c; });
+        var items = (cat ? cat.items : []).map(function (it) {
+            var written = String(it.color || it.model || '').replace(/\s+/g, ' ').trim();
+            return {
+                brand: normalizeClBrand(it.brand),
+                color: written,
+                sales: it.sales || 0, refunds: it.refunds || 0, qty: it.qty || 0, net: it.net || 0
+            };
+        });
+        var byBrand = { 'Lensme': [], 'Afle': [], 'Korean Style': [] };
+        items.forEach(function (it) {
+            if (byBrand[it.brand]) byBrand[it.brand].push(it);
+        });
+        var blocks = ['Lensme', 'Afle', 'Korean Style'].map(function (brand) {
+            var list = byBrand[brand] || [];
+            var net = list.reduce(function (a, it) { return a + it.net; }, 0);
+            var qty = list.reduce(function (a, it) { return a + it.qty; }, 0);
+            var colors = aggregateBy(list.filter(function (it) { return it.color; }).map(function (it) {
+                return { brand: it.brand, color: it.color, sales: it.sales, refunds: it.refunds, qty: it.qty, net: it.net };
+            }), 'color', true);
+            var ends = topBottomRows(colors, 5, 'name');
+            ends.top.forEach(function (r, i) { lastColorRows.push({ brand: brand, side: 'أعلى', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            ends.bottom.forEach(function (r, i) { lastColorRows.push({ brand: brand, side: 'أقل', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            return '<div class="month-cat-block"><h4>' + escapeHtml(brand) + ' · ' + money(net) + ' · كمية ' + num(qty, 1) + '</h4><div class="pair-grid">' +
+                extremeTable(ends.top, 'أفضل 5 ألوان', false) +
+                extremeTable(ends.bottom, 'أقل 5 ألوان', true) +
+                '</div></div>';
+        }).join('');
+        box.innerHTML = '<h3 style="margin-top:8px;">العدسات اللاصقة الملونة حسب الماركة</h3>' + blocks;
+    }
+
     function renderProducts(list) {
         lastCategoryRows = [];
         catMoreSeq = 0;
+        catCatalog = [];
+        if ($('categoryDetail')) $('categoryDetail').innerHTML = '<div class="hint">اضغط على اسم الفئة في القائمة لعرض كل منتجاتها</div>';
+        var rankedAll = rankCategories(mergeAllCategories(list));
+        renderCategoryMix(rankedAll);
+        renderBrandExtremes(rankedAll);
+        renderColoredLensAnalysis(rankedAll);
         var toggle = $('productsViewToggle');
         if (toggle) {
             if (list.length > 1) {
@@ -1997,7 +2350,6 @@
                     (blocks || '') + '</div>';
             }).join('');
         } else {
-            var rankedAll = rankCategories(mergeAllCategories(list));
             if (wrap) wrap.innerHTML = topSellersHtml(rankedAll);
             $('monthCategories').innerHTML = categoryBlocksHtml(rankedAll, 'الكل') || '';
         }
@@ -2013,7 +2365,7 @@
         var list = sortedMonths();
         if (!list.length) { alert('لا توجد بيانات'); return; }
 
-        var branchName = ($('branchName').value || 'BRANCH').trim() || 'BRANCH';
+        var branchName = ($('branchName').value || 'الفرع').trim();
         var open = parseYm($('branchOpen').value);
         var singleMonth = list.length === 1;
         var daysCovered = resolveMtdCompareDay(list).day;
@@ -2034,8 +2386,7 @@
         });
 
         var discPct = sumGross > 0 ? (sumDisc / sumGross) * 100 : 0;
-        var branchAtv = sumInv > 0 ? sumAfterRefund / sumInv : 0;
-        var branchTkt = sumInv;
+        var aov = sumQty > 0 ? sumNet / sumQty : 0;
         var bestFinal = list[0], worstFinal = list[0];
         list.forEach(function (m) {
             var k = calcKpis(m);
@@ -2047,14 +2398,15 @@
         var weekStats = singleMonth ? calcMonthWeeks(list[0]) : [];
         var bestWeek = weekStats.length ? weekStats.slice().sort(function (a, b) { return b.netAfterRefund - a.netAfterRefund; })[0] : null;
 
+        var branchAtv = sumInv > 0 ? sumAfterRefund / sumInv : 0;
         var kpiCards = [
             { l: 'المبيعات الصافية', n: money(sumAfterRefund), s: '' },
-            { l: 'TKT', n: num(branchTkt), s: 'عدد الفواتير' },
-            { l: 'ATV', n: branchAtv ? money(branchAtv, 1) : '—', s: 'متوسط الفاتورة' },
+            { l: 'TKT', n: num(sumInv), s: 'عدد الفواتير' },
+            { l: 'متوسط الفاتورة', n: sumInv ? money(branchAtv) : '—', s: 'ATV' },
             { l: 'المرتجعات', n: money(sumRefAmt), s: num(sumRefCnt) + ' فاتورة' },
             { l: 'الخصومات', n: money(sumDisc), s: pct(discPct) },
             { l: 'التارقت', n: branchTarget ? money(branchTarget) : '—', s: '' },
-            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: singleMonth ? labelYm(list[0].key) : 'إجمالي الفترة' }
+            { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: '' }
         ];
         $('kpiGrid').innerHTML = kpiCards.map(function (c) {
             return '<div class="kpi-card"><div class="label">' + c.l + '</div><div class="num">' + c.n + '</div>' + (c.s ? '<div class="sub">' + c.s + '</div>' : '') + '</div>';
@@ -2107,17 +2459,16 @@
         lastRows = [{
             month: singleMonth ? labelYm(list[0].key) : 'الكل',
             netAfterRefund: sumAfterRefund, discount: sumDisc, refundAmount: sumRefAmt,
-            target: branchTarget, achievePct: achievePct,
-            tkt: branchTkt, atv: branchAtv
+            target: branchTarget, achievePct: achievePct, atv: branchAtv
         }];
         renderProducts(list);
 
         var insights = [
             'صافي المبيعات <b>' + money(sumAfterRefund) + '</b> · مرتجعات <b>' + money(sumRefAmt) + '</b> · خصومات <b>' + money(sumDisc) + '</b>.',
             'التارقت <b>' + (branchTarget ? money(branchTarget) : '—') + '</b> · التحقيق <b>' + (branchTarget ? pct(achievePct) : '—') + '</b> · حتى يوم <b>' + daysCovered + '</b>.',
-            'TKT <b>' + num(branchTkt) + '</b> · ATV الفرع <b>' + (branchAtv ? money(branchAtv, 1) : '—') + '</b> · الفرع <b>' + escapeHtml(branchName) + '</b>.',
-            'عدد الموظفين: <b>' + (lastStaffRows.length || 0) + '</b>.'
-        ];
+            'عدد الموظفين: <b>' + (lastStaffRows.length || 0) + '</b>.',
+            lastMixInsight
+        ].filter(Boolean);
         $('insightsList').innerHTML = insights.map(function (x) { return '<li>' + x + '</li>'; }).join('');
 
         $('reportOutput').style.display = 'block';
@@ -2125,16 +2476,17 @@
         saveLocal();
     }
 
+    function safeExcelName(name) {
+        return String(name || 'branch').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').slice(0, 80) || 'branch';
+    }
+
     function exportExcel() {
-        if (!lastRows.length || typeof XLSX === 'undefined') { alert('اعرض التقرير أولاً'); return; }
-        var kpi = [['الفترة','المبيعات الصافية','TKT','ATV','الخصومات','المرتجعات','التارقت','تحقيق %']];
+        if (!lastRows.length) { alert('اعرض التقرير أولاً'); return; }
+        if (typeof XLSX === 'undefined') { alert('مكتبة Excel لم تُحمَّل. تأكد من الإنترنت ثم أعد فتح الصفحة'); return; }
+        try {
+        var kpi = [['الفترة','المبيعات الصافية','متوسط الفاتورة','الخصومات','المرتجعات','التارقت','تحقيق %']];
         lastRows.forEach(function (r) {
-            kpi.push([r.month, r.netAfterRefund, r.tkt || 0, r.atv ? +Number(r.atv).toFixed(2) : '', r.discount, r.refundAmount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
-        });
-        var monthTkt = [['الشهر','TKT','ATV']];
-        sortedMonths().forEach(function (m) {
-            var k = calcKpis(m);
-            monthTkt.push([labelYm(m.key), m.invoices || 0, k.atvAfterRefund ? +k.atvAfterRefund.toFixed(2) : '']);
+            kpi.push([r.month, r.netAfterRefund, r.atv != null && isFinite(Number(r.atv)) ? +Number(r.atv).toFixed(2) : '', r.discount, r.refundAmount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
         });
         var cats = [['الشهر','#','الفئة / الصنف','كمية','مبيعات','بعد المرتجع','مرتجعات']];
         lastCategoryRows.forEach(function (r) {
@@ -2142,14 +2494,12 @@
         });
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpi), 'KPI');
-        if (monthTkt.length > 1) {
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthTkt), 'TKT ATV');
-        }
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cats), 'Categories');
         if (lastMtdRows.length) {
             var mtd = [['الشهر','الفترة','بعد الخصم','بعد المرتجع','مرتجعات','فواتير','ATV','مقارنة %']];
             lastMtdRows.forEach(function (r) {
-                mtd.push([r.month, r.period, r.net, r.netAfterRefund, r.refundAmount, r.invoices, +r.atv.toFixed(2), r.vsRef != null ? +r.vsRef.toFixed(2) : '']);
+                var atv = Number(r.atv);
+                mtd.push([r.month, r.period, r.net, r.netAfterRefund, r.refundAmount, r.invoices, isFinite(atv) ? +atv.toFixed(2) : '', r.vsRef != null ? +r.vsRef.toFixed(2) : '']);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mtd), 'MTD Compare');
         }
@@ -2175,13 +2525,31 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wk), 'Weeks');
         }
         if (lastStaffRows.length) {
-            var st = [['#','الموظف','المسمى','مبيعات','بعد المرتجع','TKT','ATV']];
+            var st = [['#','الموظف','المسمى','مبيعات','فواتير','متوسط الفاتورة','عدد نظارات طبية','عدد نظارات شمسية','عدد عدسات ملونة','عدسات طبية','التارقت الشخصي']];
             lastStaffRows.forEach(function (s, idx) {
-                st.push([idx + 1, s.full, s.role || '', s.sales, s.netAfterRefund, s.invoices, s.atv ? +s.atv.toFixed(2) : '']);
+                st.push([idx + 1, s.full, s.role || '', s.netAfterRefund, s.invoices, s.invoices ? +(s.netAfterRefund / s.invoices).toFixed(2) : '',
+                    staffCatQty(s, ['Medical Glasses', 'Optical Frames', 'Finished Lenses', 'LW Lab Lens', 'LW Ready Made']), staffCatQty(s, ['Sunglasses']),
+                    staffCatQty(s, ['Colored CL']), staffCatNet(s, ['Clear CL']), s.personalTarget || 0]);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(st), 'Staff');
         }
-        XLSX.writeFile(wb, (($('branchName').value || 'BRANCH') + '_monthly_kpi.xlsx').replace(/\s+/g, '_'));
+        if (lastBrandRows.length) {
+            var br = [['المجموعة','الترتيب','الماركة','كمية','صافي']];
+            lastBrandRows.forEach(function (r) { br.push([r.group + ' ' + r.side, r.rank, r.name, r.qty, r.net]); });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(br), 'Brands');
+        }
+        if (lastColorRows.length) {
+            var cl = [['الماركة','الترتيب','اللون','كمية','صافي']];
+            lastColorRows.forEach(function (r) { cl.push([r.brand + ' ' + r.side, r.rank, r.name, r.qty, r.net]); });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cl), 'CL Colors');
+        }
+        if (!wb.Workbook) wb.Workbook = {};
+        wb.Workbook.Views = [{ RTL: true }];
+        XLSX.writeFile(wb, safeExcelName($('branchName').value) + '_monthly_kpi.xlsx');
+        } catch (err) {
+            console.error(err);
+            alert('تعذر إنشاء ملف Excel: ' + (err && err.message ? err.message : err));
+        }
     }
 
     window.handleAnyFiles = handleAnyFiles;
@@ -2194,8 +2562,10 @@
     window.clearAllMonths = clearAllMonths;
     window.toggleProductsView = toggleProductsView;
     window.revealNextCatItem = revealNextCatItem;
+    window.showCategoryProducts = showCategoryProducts;
     window.toggleStaffPersonal = toggleStaffPersonal;
     window.setStaffRole = setStaffRole;
+    window.setStaffTarget = setStaffTarget;
     window.buildReport = buildReport;
     window.refreshReportIfReady = function () {
         if (Object.keys(monthsMap).length) buildReport();

@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magrabi Smart POS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #333333;
+      --cream: #fdfaf9;
+      --white: #ffffff;
+      --gold: #dea537;
+      --gold-2: #b8892a;
+      --ok: #333333;
+      --muted: #333333;
+      --line: #f2e8e5;
+      --line-strong: #e8d5d0;
+      --dark: #333333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html.lenis, html.lenis body { height: auto; }
+    html { scroll-behavior: auto; }
+    body {
+      font-family: Tajawal, "Inter", sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    header.nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 80;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 30px;
+      background: rgba(253, 250, 249, 0.86);
+      backdrop-filter: saturate(140%) blur(14px);
+      -webkit-backdrop-filter: saturate(140%) blur(14px);
+      border-bottom: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .brand { font-weight: 600; letter-spacing: -0.04em; font-size: 20px; }
+    .brand b { font-weight: 500; color: var(--gold-2); }
+    .nav-mid {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 30px; font-size: 16px; font-weight: 500;
+    }
+    .nav-mid a { color: var(--ink); text-decoration: none; opacity: .6; transition: opacity .25s; }
+    .nav-mid a:hover { opacity: 1; }
+    .nav-actions { display: flex; gap: 10px; }
+    button, .chip {
+      font-family: inherit; font-weight: 500; font-size: 14px; cursor: pointer;
+      border: 1px solid var(--line-strong); border-radius: 100px; padding: 11px 22px; background: #fff; color: var(--ink);
+      transition: transform .25s, background .25s, color .25s, opacity .25s;
+    }
+    button:hover, .chip:hover { opacity: .88; }
+    #langBtn { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    #langBtn:hover { background: var(--gold); color: #fff; border-color: var(--gold); opacity: 1; }
+
+    .hero-wrap { height: 165vh; }
+    .hero-sticky {
+      position: sticky; top: 0; height: 100vh; overflow: hidden;
+      background: var(--cream);
+    }
+    .hero-scale {
+      position: absolute; inset: -8%;
+      background:
+        radial-gradient(900px 520px at 72% 28%, rgba(222,165,55,.22), transparent 55%),
+        radial-gradient(700px 480px at 18% 82%, rgba(201,146,132,.08), transparent 50%),
+        var(--cream);
+      will-change: transform;
+    }
+    .hero-mark {
+      position: absolute; z-index: 3; left: 50%; top: 46%;
+      transform: translate(-50%, -50%);
+      text-align: center; width: min(92vw, 1200px);
+      pointer-events: none;
+    }
+    .hero-word {
+      font-size: clamp(56px, 15vw, 200px); line-height: .82; font-weight: 600;
+      letter-spacing: -0.05em; color: var(--ink);
+    }
+    .hero-copy {
+      position: absolute; z-index: 3;
+      inset-inline-start: 6vw; bottom: 20vh;
+      max-width: 40ch; text-align: start;
+    }
+    .hero-brand {
+      font-size: clamp(22px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.04em; color: var(--ink);
+    }
+    .hero-sub {
+      margin-top: 8px; font-size: 15px; color: var(--gold-2); font-weight: 600; letter-spacing: .01em;
+    }
+    .hero-copy p {
+      margin-top: 16px; font-size: 16px; line-height: 1.7; color: var(--ink);
+    }
+    .hero-credit {
+      position: static;
+      margin-top: 16px;
+      text-align: center; font-size: 13px; font-weight: 500;
+      letter-spacing: 0.02em; color: var(--muted);
+      pointer-events: none;
+    }
+    .hero-bar {
+      position: absolute; z-index: 4; left: 0; right: 0; bottom: 0;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 20px 6vw; font-size: 13px; font-weight: 500; color: var(--ink);
+      background: transparent; border-top: 1px solid var(--line);
+    }
+    .hero-bar .year { direction: ltr; unicode-bidi: isolate; }
+    .hero-bar .mid { opacity: .7; }
+
+    section.block { padding: 18vh 6vw; max-width: 1400px; margin: 0 auto; }
+    .kicker { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-2); font-weight: 600; margin-bottom: 18px; }
+    h2 { font-size: clamp(38px, 8vw, 85px); line-height: 1.02; letter-spacing: -0.03em; font-weight: 600; }
+    h2 .dim { color: var(--ink); }
+    .lead { margin-top: 16px; font-size: 18px; line-height: 1.65; color: var(--ink); max-width: 40ch; }
+    .sec-head {
+      display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px;
+      align-items: end; margin-bottom: 56px;
+    }
+    .sec-head .lead { margin-top: 0; }
+    .grid { display: grid; gap: 16px; margin-top: 40px; }
+    .g2 { grid-template-columns: 1.1fr .9fr; }
+    .g3 { grid-template-columns: repeat(3, 1fr); }
+    .g4 { grid-template-columns: repeat(4, 1fr); }
+    .g5 { grid-template-columns: repeat(5, 1fr); }
+
+    .card, .invoice, .pipe, .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 26px;
+    }
+    .card { min-height: 190px; transition: transform .3s, border-color .3s; }
+    .card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+    .card small, .pipe small { display: block; color: var(--gold-2); font-weight: 600; margin-bottom: 10px; font-size: 14px; }
+    .card h3 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 10px; }
+    .card p { color: var(--ink); font-size: 15px; line-height: 1.6; }
+    .projects { display: flex; flex-direction: column; margin-top: 24px; }
+    .proj-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      min-height: 100vh; align-content: center;
+      scroll-margin-top: 0;
+    }
+    .proj-row.wide { grid-template-columns: 1fr; }
+    .proj {
+      height: 72vh; min-height: 280px; border-radius: 16px; overflow: hidden; position: relative;
+      background: var(--dark); color: #fff;
+    }
+    .proj.photo {
+      background-color: #1a1510;
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+    }
+    .proj.photo::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(20,14,6,.12) 40%, rgba(20,14,6,.62));
+    }
+    .p1 { background-image: url("pitch-images/01-enter.jpg"); }
+    .p2 { background-image: url("pitch-images/02-staff.jpg"); }
+    .p3 { background-image: url("pitch-images/03-frame.jpg"); }
+    .p4 { background-image: url("pitch-images/04-checkout.jpg"); }
+    .p5 { background-image: url("pitch-images/05-handwritten.jpg"); }
+    .proj.red { background: var(--gold); height: 56vh; }
+    .proj span, .proj b { position: absolute; z-index: 1; }
+    .proj span { inset: auto 26px 24px; font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
+    .proj b { top: 24px; inset-inline-start: 26px; opacity: .85; font-weight: 500; }
+
+    .demo {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start;
+      font-size: 15px;
+    }
+    .pos-demo .pos {
+      background: #fff; border-radius: 16px; padding: 18px;
+      border: 1px solid var(--line); box-shadow: none;
+    }
+    .pos-demo .steps {
+      display: flex; background: #f2e8e5; border-radius: 100px; overflow: hidden; margin-bottom: 16px;
+    }
+    .pos-demo .steps span {
+      flex: 1; text-align: center; padding: 11px 8px; font-weight: 500; font-size: 14px; color: var(--muted);
+    }
+    .pos-demo .steps span.on { background: var(--gold); color: #fff; }
+    .pos-demo .boxy {
+      border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; background: #fff;
+    }
+    .pos-demo .boxy h4 { margin-bottom: 10px; font-size: 16px; font-weight: 600; }
+    .pos-demo label.lbl { display: block; font-weight: 500; font-size: 13px; margin: 10px 0 6px; color: var(--ink); }
+    .pos-demo input, .pos-demo select {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
+      font: inherit; background: #fffafa; color: var(--ink);
+    }
+    .pos-demo input:focus, .pos-demo select:focus { outline: none; border-color: var(--gold-2); }
+    .pos-demo .addons {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+    }
+    .pos-demo .addon {
+      border: 1px solid var(--line); background: #fffafa; border-radius: 12px; padding: 12px 10px; font: inherit; font-weight: 500;
+      cursor: pointer; color: var(--ink); text-align: center;
+    }
+    .pos-demo .addon.on { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .pos-demo .hint { font-size: 12px; color: var(--gold); font-weight: 500; margin: 6px 0 8px; }
+    .pos-demo .ins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pos-demo .split-btn {
+      display: block; margin: 12px auto 0; background: #fff; color: var(--ink);
+      border: 1px solid var(--ink); border-radius: 100px; padding: 9px 20px;
+      font: inherit; font-weight: 500; cursor: pointer;
+    }
+    .pos-demo .split-btn.on { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .pos-demo .split-extra { display: block; margin-top: 12px; }
+    .pos-demo .ins-panel {
+      display: none; margin-top: 18px; padding: 24px 22px 22px; border-radius: 16px;
+      background: #fff; border: 1px solid var(--line); box-shadow: none;
+      max-width: 560px; margin-inline: auto;
+    }
+    .pos-demo .ins-panel.open { display: block; }
+    .pos-demo .ins-title { text-align: center; color: var(--ink); font-weight: 600; font-size: 22px; letter-spacing: -.02em; margin-bottom: 16px; }
+    .pos-demo .ins-panel input {
+      background: #fffafa; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    }
+    .pos-demo .price-display {
+      background: #fff; border-radius: 16px; padding: 26px 20px 18px;
+      border: 1px solid var(--line); text-align: center; position: relative; overflow: hidden; color: var(--ink);
+    }
+    .pos-demo .price-display::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .pos-demo .price-k { color: var(--ink); font-weight: 500; font-size: 14px; }
+    .pos-demo .price-tag { font-size: 46px; font-weight: 600; color: var(--ink); letter-spacing: -.04em; margin: 6px 0 16px; }
+    .pos-demo .price-tag small { font-size: 18px; margin-inline-end: 6px; color: var(--gold); }
+    .pos-demo .win {
+      background: #fff; border-radius: 14px; overflow: hidden; text-align: start;
+      box-shadow: none; border: 1px solid var(--line); color: var(--ink);
+    }
+    .pos-demo .sec { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .pos-demo .sec:last-child { border-bottom: 0; }
+    .pos-demo .sec-ins { background: #fffafa; }
+    .pos-demo .sec-pay { background: #fffafa; }
+    .pos-demo .sec-fin { background: #fffafa; color: var(--ink); }
+    .pos-demo .sec-title { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); margin-bottom: 10px; }
+    .pos-demo .sec-ins .sec-title { color: var(--ink); }
+    .pos-demo .sec-pay .sec-title { color: var(--ink); }
+    .pos-demo .sec-fin .sec-title { color: var(--ink); }
+    .pos-demo .ln {
+      display: flex; justify-content: space-between; gap: 10px; padding: 8px 0;
+      border-bottom: 1px dashed var(--line); font-weight: 500;
+    }
+    .pos-demo .ln:last-child { border-bottom: 0; }
+    .pos-demo .ln b { font-family: "Inter", sans-serif; font-weight: 600; direction: ltr; }
+    .pos-demo .ln.ins { color: var(--ink); }
+    .pos-demo .ln.gold { color: var(--gold); }
+    .pos-demo .sec-fin .ln.gold { color: var(--gold-2); }
+    .pos-demo .ln.big { font-size: 17px; }
+    .pos-demo .upsell { margin-top: 32px; }
+    .pos-demo .upsell-head {
+      text-align: center; font-weight: 600; color: var(--ink); margin-bottom: 16px; font-size: 18px; letter-spacing: -.02em;
+      padding-bottom: 14px; border-bottom: 1px solid var(--line);
+    }
+    .pos-demo .upsell-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    }
+    .pos-demo .upcard {
+      text-align: start; background: #fff; border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px; cursor: pointer; font: inherit; color: inherit; width: 100%;
+      box-shadow: none; transition: transform .3s, border-color .3s;
+    }
+    .pos-demo .upcard:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+    .pos-demo .upcard.on { border-color: var(--gold-2); background: #fff6df; color: var(--ink); }
+    .pos-demo .upcard.on p { color: var(--ink); }
+    .pos-demo .upcard h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .pos-demo .upcard p { font-size: 13px; color: var(--ink); margin: 4px 0; line-height: 1.5; }
+    .pos-demo .gap {
+      display: inline-block; margin-top: 10px; padding: 6px 12px; border-radius: 100px;
+      border: 1px solid var(--gold); color: var(--gold); font-weight: 600; font-size: 13px;
+    }
+    .pos-demo .upcard.on .gap { border-color: var(--gold); color: var(--gold-2); }
+    .both-board {
+      margin-top: 32px; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 20px 18px;
+    }
+    .both-board > h3 { text-align: center; color: var(--ink); font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 20px; }
+    .both-row {
+      display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 12px; margin-bottom: 14px;
+    }
+    .both-row .win { border-radius: 14px; }
+    .both-row .pair-title {
+      grid-column: 1 / -1; font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: -4px;
+    }
+    .both-foot {
+      display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      padding: 16px 8px 4px; font-weight: 600; color: var(--ink); border-top: 1px solid var(--line); margin-top: 8px;
+    }
+    .both-foot b { display: block; font-size: 30px; letter-spacing: -.03em; margin-top: 4px; }
+    .both-foot small { color: var(--ink); font-weight: 500; }
+    .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+    .row.total { border: 0; color: var(--ok); font-size: 28px; font-weight: 600; padding-top: 16px; }
+    .toggles { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
+    .toggles .chip { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .chip.on { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .pipeline { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 40px; }
+    .pipe { flex: 1; min-width: 160px; transition: transform .6s cubic-bezier(.22,1,.36,1), background .6s, color .6s; }
+    .pipe h3 { font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+    .pipe.on { transform: translateY(-10px); background: #fff6df; color: var(--ink); border-color: var(--gold-2); }
+    .pipe.on small { color: var(--gold); }
+    .stat b { display: block; font-size: 42px; font-weight: 600; letter-spacing: -0.04em; }
+    .stat span { display: block; margin-top: 10px; color: var(--ink); font-size: 14px; line-height: 1.5; }
+    .bill-strip {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 8px;
+    }
+    .bill-strip div {
+      background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 24px 20px; min-height: 150px;
+    }
+    .bill-strip .pay { background: #fff6df; border-color: var(--gold); color: var(--ink); }
+    .bill-strip small { display: block; color: var(--gold-2); font-weight: 600; margin-bottom: 18px; font-size: 14px; }
+    .bill-strip .pay small { color: var(--gold); }
+    .bill-strip b { display: block; font-size: clamp(28px, 3vw, 42px); font-weight: 600; letter-spacing: -0.04em; }
+    .bill-strip span { display: block; margin-top: 10px; font-size: 14px; color: var(--ink); font-weight: 500; }
+    .bill-strip .pay span { color: var(--ink); }
+    .num-card small { display: block; color: var(--muted); font-weight: 500; margin-bottom: 10px; font-size: 13px; }
+    .num-card b { font-size: 22px; }
+    .honor {
+      display: grid; gap: 0; margin-top: 28px;
+    }
+    .honor a, .honor .hrow {
+      display: grid; grid-template-columns: 90px 1fr 1fr; gap: 16px;
+      padding: 26px 8px; border-top: 1px solid var(--line);
+      font-weight: 500; text-decoration: none; color: inherit; transition: padding-inline .3s;
+    }
+    .honor .hrow:hover { padding-inline: 16px; }
+    .honor .hrow span:first-child { color: var(--gold-2); font-weight: 600; }
+    .honor .hrow em { font-style: normal; color: var(--ink); font-weight: 500; }
+
+    [data-reveal] { will-change: transform, opacity; }
+    footer { padding: 10vh 6vw 12vh; font-weight: 500; color: var(--ink); border-top: 1px solid var(--line); }
+
+    @media (max-width: 900px) {
+      .g2, .g3, .g4, .g5, .proj-row, .sec-head, .bill-strip, .honor .hrow { grid-template-columns: 1fr; }
+      .nav-mid { display: none; }
+      .proj { height: 42vh; }
+      .proj-row { min-height: auto; padding: 18px 0; }
+      .both-row { grid-template-columns: 1fr !important; }
+      .hero-word { font-size: 64px; }
+    }
+    [dir="ltr"] body { font-family: "Inter", Tajawal, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">magrabi <b>Smart POS</b></div>
+    <nav class="nav-mid">
+      <a href="#calc" data-ar="الحاسبة" data-en="Calculator">الحاسبة</a>
+      <a href="#lab" data-ar="الورشة" data-en="Workshop">الورشة</a>
+      <a href="#cl" data-ar="العدسات" data-en="Lenses">العدسات</a>
+      <a href="#ship" data-ar="الشحن" data-en="Shipping">الشحن</a>
+    </nav>
+    <div class="nav-actions">
+      <button type="button" id="langBtn">EN</button>
+      <button type="button" id="startBtn" data-ar="انزل للعرض" data-en="Scroll">انزل للعرض</button>
+    </div>
+  </header>
+
+  <div class="hero-wrap" data-snap>
+    <div class="hero-sticky">
+      <div class="hero-scale" id="heroScale"></div>
+      <div class="hero-mark">
+        <div class="hero-word">MAGRABi</div>
+        <div class="hero-credit" id="heroCredit">Developed by Dr. Muhannad Almushayqih</div>
+      </div>
+      <div class="hero-copy" id="heroCopy">
+        <div class="hero-brand">Magrabi Smart POS</div>
+        <div class="hero-sub" data-ar="منصة تشغيل الفروع" data-en="Branch operating platform">منصة تشغيل الفروع</div>
+        <p data-ar="نظام بُني من أرض الفرع لحل مشاكل التسعير، التأمين، الطلبات، العدسات اللاصقة، والشحن في مسار واحد واضح أمام العميل والموظف." data-en="A system built on the shop floor to solve pricing, insurance, orders, contact lenses, and shipping — one clear path for customer and staff.">نظام بُني من أرض الفرع لحل مشاكل التسعير، التأمين، الطلبات، العدسات اللاصقة، والشحن في مسار واحد واضح أمام العميل والموظف.</p>
+      </div>
+      <div class="hero-bar">
+        <span data-ar="متاح للعرض" data-en="Available for work">متاح للعرض</span>
+        <span class="mid">Solitaire Mall</span>
+        <span data-ar="انزل للعرض ↓" data-en="Scroll To View More ↓">انزل للعرض ↓</span>
+        <span class="year">@2026</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="block" id="map">
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal>MAGRABi · Smart POS</p>
+        <h2 data-reveal>نظام الفروع<br><span class="dim">الحالي</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="نبدأ من أول لحظة بيع: حاسبة الأسعار — ثم نكمل رحلة الطلب حتى الاستلام." data-en="We start at the first sale: the price calculator — then the order journey through handover.">نبدأ من أول لحظة بيع: حاسبة الأسعار — ثم نكمل رحلة الطلب حتى الاستلام.</p>
+    </div>
+    <div class="projects">
+      <div class="proj-row" data-snap>
+        <article class="proj photo p1" data-reveal><b>01</b><span data-ar="دخول الفرع" data-en="Entering the store">دخول الفرع</span></article>
+        <article class="proj photo p2" data-reveal><b>02</b><span data-ar="الموظف يساعدهم" data-en="Staff welcome">الموظف يساعدهم</span></article>
+      </div>
+      <div class="proj-row" data-snap>
+        <article class="proj photo p3" data-reveal><b>03</b><span data-ar="اختيار الإطار" data-en="Choosing the frame">اختيار الإطار</span></article>
+        <article class="proj photo p4" data-reveal data-go="calc"><b>04</b><span data-ar="الحساب" data-en="Checkout">الحساب</span></article>
+      </div>
+      <div class="proj-row wide" data-snap>
+        <article class="proj photo p5" data-reveal data-go="calc"><b>05</b><span data-ar="الحساب اليدوي" data-en="Handwritten total">الحساب اليدوي</span></article>
+      </div>
+    </div>
+    <div class="grid g4" style="margin-top:56px">
+      <article class="card" data-reveal><small>01</small><h3 data-ar="الحاسبة الذكية" data-en="Smart calculator">الحاسبة الذكية</h3><p data-ar="عدسة + إطار + تأمين + عرض" data-en="Lens + frame + insurance + offer">عدسة + إطار + تأمين + عرض</p></article>
+      <article class="card" data-reveal><small>02</small><h3 data-ar="الورشة" data-en="Workshop">الورشة</h3><p data-ar="إرسال وتتبع الطلبات" data-en="Send and track jobs">إرسال وتتبع الطلبات</p></article>
+      <article class="card" data-reveal><small>03</small><h3 data-ar="حاسبة العدسات اللاصقة" data-en="Contact-lens calculator">حاسبة العدسات اللاصقة</h3><p data-ar="تحويل الوصفات وإرسال الطلبات" data-en="Convert Rx and send orders">تحويل الوصفات وإرسال الطلبات</p></article>
+      <article class="card" data-reveal><small>04</small><h3 data-ar="الشحن والفروع" data-en="Shipping & branches">الشحن والفروع</h3><p data-ar="توحيد هوية الطلبات والإرسالية بين الفروع" data-en="One identity for requests and waybills">توحيد هوية الطلبات والإرسالية بين الفروع</p></article>
+    </div>
+  </section>
+
+  <section class="block" id="calc" data-snap>
+    <div id="demoCalc" class="pos-demo">
+    <div class="demo">
+      <div class="pos">
+        <div class="steps">
+          <span data-ar="الإطار" data-en="Frame">الإطار</span>
+          <span class="on" data-ar="الرؤية" data-en="Vision">الرؤية</span>
+          <span data-ar="العدسة" data-en="Lens">العدسة</span>
+        </div>
+        <div class="boxy">
+          <h4 data-ar="سعر الإطار الأساسي" data-en="Frame price">سعر الإطار الأساسي</h4>
+          <input type="number" id="frameIn" min="0" value="1500" dir="ltr">
+        </div>
+        <div class="boxy">
+          <h4 data-ar="العدسات" data-en="Lenses">العدسات</h4>
+          <label class="lbl" data-ar="احتياج العميل (الرؤية)" data-en="Vision need">احتياج العميل (الرؤية)</label>
+          <select id="lensIn">
+            <option value="650" selected>Single Vision — 650</option>
+            <option value="1600">Single Vision Premium — 1,600</option>
+            <option value="1900">Anti-Fatigue — 1,900</option>
+            <option value="2400">Progressive — 2,400</option>
+          </select>
+          <label class="lbl" data-ar="فئة العدسة" data-en="Category">فئة العدسة</label>
+          <select><option>كلاسيك (CLASSIC)</option><option>بريميوم</option></select>
+          <label class="lbl" data-ar="نوع المعالجة / التلوين" data-en="Treatment">نوع المعالجة / التلوين</label>
+          <select><option>شفافة (Clear)</option><option>انتقالية</option></select>
+          <label class="lbl" data-ar="ضغط العدسة (السماكة)" data-en="Index">ضغط العدسة (السماكة)</label>
+          <select><option>سمك طبيعي (1.50)</option><option>1.60</option><option>1.67</option></select>
+          <label class="lbl" data-ar="الخدمات والإضافات الاختيارية" data-en="Add-ons">الخدمات والإضافات الاختيارية</label>
+          <p class="hint" data-ar="" data-en="Tint + Blue Light (50 + 120)">
+          <div class="addons">
+            <button type="button" class="addon" data-add="50">🎨 تلوين كامل (+50)</button>
+            <button type="button" class="addon" data-add="120">💻 بلو لايت (+120)</button>
+            <button type="button" class="addon" data-add="130">🚗 قيادة ليلية (+130)</button>
+            <button type="button" class="addon" data-add="100">🕶️ ميرور (+100)</button>
+          </div>
+        </div>
+        <button type="button" class="chip" id="insBtn" data-ar="تأمين" data-en="Insurance">تأمين</button>
+        <div class="ins-panel" id="insPanel">
+          <div class="ins-title" data-ar="تفاصيل التأمين الطبي" data-en="Insurance details">تفاصيل التأمين الطبي</div>
+          <div class="ins-grid">
+            <div>
+              <label class="lbl" data-ar="إجمالي التغطية (ريال)" data-en="Coverage">إجمالي التغطية (ريال)</label>
+              <input type="number" id="covIn" min="0" value="2000" dir="ltr">
+            </div>
+            <div>
+              <label class="lbl" data-ar="نسبة تحمل العميل (ريال)" data-en="Copay">نسبة تحمل العميل (ريال)</label>
+              <input type="number" id="copayIn" min="0" value="100" dir="ltr">
+            </div>
+          </div>
+          <button type="button" class="split-btn" id="splitBtn" data-ar="هل التأمين مقسم؟" data-en="Split insurance?">هل التأمين مقسم؟</button>
+          <div class="split-extra" id="splitExtra">
+            <label class="lbl" data-ar="تغطية الإطار من التأمين بحد أقصى (ريال)" data-en="Max frame cover">تغطية الإطار من التأمين بحد أقصى (ريال)</label>
+            <input type="number" id="frameCapIn" min="0" value="400" dir="ltr">
+          </div>
+        </div>
+      </div>
+      <div class="price-display" id="bill">
+        <div class="price-k" data-ar="الإجمالي (النظارة الأولى)" data-en="Total (1st pair)">الإجمالي (النظارة الأولى)</div>
+        <div class="price-tag"><small>SAR</small><span id="bPay">3,100</span></div>
+        <div class="win">
+          <div class="sec">
+            <div class="sec-title" data-ar="الأسعار" data-en="Prices">الأسعار</div>
+            <div class="ln"><span data-ar="سعر الإطار" data-en="Frame">سعر الإطار</span><b id="bFrame">1,500 SAR</b></div>
+            <div class="ln"><span data-ar="سعر العدسات" data-en="Lenses">سعر العدسات</span><b id="bLens">650 SAR</b></div>
+            <div class="ln" id="upRow" style="display:none"><span data-ar="ترقيات" data-en="Upgrades">ترقيات</span><b id="bUp">0 SAR</b></div>
+            <div class="ln"><span id="sumLbl" data-ar="الإجمالي" data-en="Subtotal">الإجمالي</span><b id="bSum">2,150 SAR</b></div>
+          </div>
+          <div class="sec sec-ins" id="insBlock" style="display:none">
+            <div class="sec-title" data-ar="تغطية التأمين" data-en="Insurance">تغطية التأمين</div>
+            <div class="ln ins"><span data-ar="تغطية الإطار من التأمين" data-en="Frame cover">تغطية الإطار من التأمين</span><b id="bFrIns">- 0 SAR</b></div>
+            <div class="ln ins"><span data-ar="متبقي من سعر الإطار" data-en="Frame remain">متبقي من سعر الإطار</span><b id="bFrRem">0 SAR</b></div>
+            <div class="ln ins"><span data-ar="تغطية العدسات من التأمين" data-en="Lens cover">تغطية العدسات من التأمين</span><b id="bLnIns">- 0 SAR</b></div>
+            <div class="ln ins"><span data-ar="متبقي من سعر العدسات" data-en="Lens remain">متبقي من سعر العدسات</span><b id="bLnRem">0 SAR</b></div>
+            <div class="ln ins" id="insLeftRow"><span data-ar="المتبقي من التأمين" data-en="Cover left">المتبقي من التأمين</span><b id="bInsLeft">0 SAR</b></div>
+            <div class="ln ins"><span data-ar="إجمالي تغطية التأمين" data-en="Insurance total">إجمالي تغطية التأمين</span><b id="bIns">- 0 SAR</b></div>
+          </div>
+          <div class="sec sec-pay" id="payBlock" style="display:none">
+            <div class="sec-title" data-ar="مبالغ يتحملها العميل" data-en="Customer pays">مبالغ يتحملها العميل</div>
+            <div class="ln gold"><span data-ar="نسبة التحمل" data-en="Copay">نسبة التحمل</span><b id="bCopay">100 SAR</b></div>
+            <div class="ln gold"><span data-ar="مجموع غير المغطى" data-en="Uncovered">مجموع غير المغطى</span><b id="bUnc">100 SAR</b></div>
+          </div>
+          <div class="sec sec-fin">
+            <div class="ln big gold"><span data-ar="المجموع كامل" data-en="Grand total">المجموع كامل</span><b id="bGrand">2,150 SAR</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="upsell" data-snap>
+      <div class="upsell-head" data-ar="ترقية الباقة (Upselling)" data-en="Package upgrade (Upselling)">ترقية الباقة (Upselling)</div>
+      <div class="upsell-row">
+        <button type="button" class="upcard" data-add="1070">
+          <h4 data-ar="ترقية إلى Anti-Fatigue Forward ↑" data-en="Upgrade to Anti-Fatigue Forward ↑">ترقية إلى Anti-Fatigue Forward ↑</h4>
+          <p data-ar="✓ تقلل إجهاد العين الرقمي والصداع من الشاشات." data-en="✓ Reduces digital eye strain and screen headaches.">✓ تقلل إجهاد العين الرقمي والصداع من الشاشات.</p>
+          <p data-ar="✓ مثالية للجوال والكمبيوتر والقراءة." data-en="✓ Ideal for phone, computer, and reading.">✓ مثالية للجوال والكمبيوتر والقراءة.</p>
+          <span class="gap">الفرق الإضافي: + SAR 1070</span>
+          <span class="after">(المطلوب بعد الترقية: SAR 3,220)</span>
+        </button>
+        <button type="button" class="upcard" data-add="470">
+          <h4 data-ar="إضافة ترانزيشن لنوع Single Vision ↑" data-en="Add Transitions to Single Vision ↑">إضافة ترانزيشن لنوع Single Vision ↑</h4>
+          <p data-ar="✓ نفس نوع العدسة المختار مع ميزة التلون بالشمس." data-en="✓ Same lens type, with sun-tinting.">✓ نفس نوع العدسة المختار مع ميزة التلون بالشمس.</p>
+          <span class="gap">الفرق الإضافي: + SAR 470</span>
+          <span class="after">(المطلوب بعد الترقية: SAR 2,620)</span>
+        </button>
+        <button type="button" class="upcard" data-add="360">
+          <h4 data-ar="ترقية الضغط (تنحيف 1.6) ↑" data-en="Index upgrade (1.6 thinner) ↑">ترقية الضغط (تنحيف 1.6) ↑</h4>
+          <p data-ar="✓ عدسة أنحف ومظهر أجمل ووزن أخف." data-en="✓ Thinner, lighter, cleaner look.">✓ عدسة أنحف ومظهر أجمل ووزن أخف.</p>
+          <span class="gap">الفرق الإضافي: + SAR 360</span>
+          <span class="after">(المطلوب بعد الترقية: SAR 2,510)</span>
+        </button>
+        <button type="button" class="upcard up-max" data-add="0">
+          <h4 data-ar="استغلال كامل التأمين ↑" data-en="Use full insurance ↑">استغلال كامل التأمين ↑</h4>
+          <p data-ar="✓ نرفع العدسة بالمتبقي من التغطية حتى يُستهلك التأمين كاملاً." data-en="✓ Raise the lens by leftover cover so insurance is fully used.">✓ نرفع العدسة بالمتبقي من التغطية حتى يُستهلك التأمين كاملاً.</p>
+          <p data-ar="✓ الفرق يضاف على السعر الأساسي ويغطيه التأمين إن وجد." data-en="✓ The gap is added to the base price and covered if insurance is on.">✓ الفرق يضاف على السعر الأساسي ويغطيه التأمين إن وجد.</p>
+          <span class="gap" id="maxGap">الفرق الإضافي: + SAR 0</span>
+          <span class="after" id="maxAfter">(المطلوب بعد الترقية: SAR 2,150)</span>
+        </button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal>MAGRABi · Smart POS · Product Features</p>
+        <h2 data-reveal>الحاسبة<br><span class="dim">الذكية</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="نبدأ من price.html — المحطة الأولى. الموظف يختار نوع العدسة ويضيف سعر الإطار — والمجموع يظهر مباشرة مع تفصيل واضح للعميل." data-en="We start at price.html — station one. Staff pick the lens and add the frame; the total appears instantly with a clear breakdown.">نبدأ من price.html — المحطة الأولى. الموظف يختار نوع العدسة ويضيف سعر الإطار — والمجموع يظهر مباشرة مع تفصيل واضح للعميل.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small>01</small>
+        <h3 data-ar="جدول الأسعار" data-en="Price table">جدول الأسعار</h3>
+        <p data-ar="كل الأسعار في مكان واحد. جدول العدسات مربوط بقاعدة أسعار واحدة تتزامن بين الفروع." data-en="All prices in one place. The lens table syncs from one price base across branches.">كل الأسعار في مكان واحد. جدول العدسات مربوط بقاعدة أسعار واحدة تتزامن بين الفروع.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>02</small>
+        <h3 data-ar="سرعة — فرق السعر بلحظة" data-en="Speed — instant gap">سرعة — فرق السعر بلحظة</h3>
+        <p data-ar="لو سأل العميل عن عدسة أعلى، يظهر فرق الريال فوراً ويُحدَّث المجموع دون إعادة حساب من الصفر." data-en="If the customer asks for a higher lens, the riyal difference appears instantly and the total updates — no recalculating from scratch.">لو سأل العميل عن عدسة أعلى، يظهر فرق الريال فوراً ويُحدَّث المجموع دون إعادة حساب من الصفر.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>03</small>
+        <h3 data-ar="ثقة — الشرح أمام العميل" data-en="Trust — shown to the customer">ثقة — الشرح أمام العميل</h3>
+        <p data-ar="الشاشة تُعرض للعميل: الإطار - العدسة - الإضافات - ثم المبلغ النهائي بوضوح واحتراف." data-en="The screen faces the customer: frame, lens, add-ons, then the final amount — clear and professional.">الشاشة تُعرض للعميل: الإطار - العدسة - الإضافات - ثم المبلغ النهائي بوضوح واحتراف.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="الشفافية" data-en="Transparency">الشفافية</p>
+        <h2 data-reveal>فاتورة<br><span class="dim">مفهومة</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="يظهر تفصيل قبل الخصم وبعده. جدول الأسعار مفتوحاً أمام العميل كمرجع أساسي، مع عرض فحص النظر الشامل بشكل احترافي وبطاقات ترقية حسب تفضيل العميل. الفائدة: العميل يفهم ماذا يدفع ولماذا — والموظف يشرح بثقة وبنفس اللغة في كل مرة." data-en="Before and after discount, on screen. The price table stays open as a reference, with a professional eye-exam offer and upgrade cards by preference. The customer sees what they pay and why — staff explain the same way every time.">يظهر تفصيل قبل الخصم وبعده. جدول الأسعار مفتوحاً أمام العميل كمرجع أساسي، مع عرض فحص النظر الشامل بشكل احترافي وبطاقات ترقية حسب تفضيل العميل. الفائدة: العميل يفهم ماذا يدفع ولماذا — والموظف يشرح بثقة وبنفس اللغة في كل مرة.</p>
+    </div>
+    <div class="bill-strip">
+      <div data-reveal><small data-ar="سعر الإطار" data-en="Frame">سعر الإطار</small><b>1,750</b><span data-ar="يُضاف تلقائياً" data-en="Added automatically">يُضاف تلقائياً</span></div>
+      <div data-reveal><small data-ar="سعر العدسة" data-en="Lens">سعر العدسة</small><b>2,100</b><span data-ar="من الجدول الموحّد" data-en="From the shared table">من الجدول الموحّد</span></div>
+      <div data-reveal><small data-ar="خدمات إضافية" data-en="Extras">خدمات إضافية</small><b>120</b><span data-ar="تلوين · مرآة · غيرها" data-en="Tint · mirror · more">تلوين · مرآة · غيرها</span></div>
+      <div data-reveal><small data-ar="خصم أو تأمين مؤهَّل" data-en="Discount / insurance">خصم أو تأمين مؤهَّل</small><b>−2,000</b><span data-ar="يُطرح حسب القاعدة" data-en="Deducted by the rule">يُطرح حسب القاعدة</span></div>
+      <div class="pay" data-reveal><small data-ar="المطلوب من العميل" data-en="Customer pays">المطلوب من العميل</small><b>1,970</b><span data-ar="مبلغ نهائي واحد" data-en="One final amount">مبلغ نهائي واحد</span></div>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="التأمين الطبي" data-en="Medical insurance">التأمين الطبي</p>
+        <h2 data-reveal>حاسبة التأمين<br><span class="dim">الدقيقة</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="النظام يوزّع التغطية على الإطار والعدسات، ويضيف نسبة التحمّل، ويظهر ما يغطيه التأمين وما يبقى على العميل. حسبة واحدة دقيقة أمام العميل، واستغلال أفضل لتغطيته خلال نافذة الخدمة في الفرع." data-en="Cover is split across frame and lenses, copay is added, and what insurance pays vs the customer stays visible. One accurate calc in front of the customer — better use of cover during the visit.">النظام يوزّع التغطية على الإطار والعدسات، ويضيف نسبة التحمّل، ويظهر ما يغطيه التأمين وما يبقى على العميل. حسبة واحدة دقيقة أمام العميل، واستغلال أفضل لتغطيته خلال نافذة الخدمة في الفرع.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small>01</small>
+        <h3 data-ar="تغطية كاملة" data-en="Full cover">تغطية كاملة</h3>
+        <p data-ar="سقف واحد للفاتورة. يُخصم مبلغ التأمين من البنود المؤهَّلة، ثم يُضاف نسبة التحمّل ليظهر المطلوب من العميل مباشرة بشكل احترافي." data-en="One cap for the bill. Insurance is taken from eligible lines, then copay is added so the customer amount appears immediately.">سقف واحد للفاتورة. يُخصم مبلغ التأمين من البنود المؤهَّلة، ثم يُضاف نسبة التحمّل ليظهر المطلوب من العميل مباشرة بشكل احترافي.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>02</small>
+        <h3 data-ar="تغطية مقسّمة" data-en="Split cover">تغطية مقسّمة</h3>
+        <p data-ar="حد تغطية الإطار + المتبقي للعدسات. مثال: 400 ريال للإطار، وباقي التغطية للعدسات. التوزيع يتم تلقائياً حسب الاختيار." data-en="Frame cap + leftover for lenses. Example: SAR 400 on the frame, the rest on lenses. Split happens automatically.">حد تغطية الإطار + المتبقي للعدسات. مثال: 400 ريال للإطار، وباقي التغطية للعدسات. التوزيع يتم تلقائياً حسب الاختيار.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>03</small>
+        <h3 data-ar="وضوح" data-en="Clarity">وضوح</h3>
+        <p data-ar="ما يغطيه التأمين وما لا يغطيه. ترقيات العدسة غير المشمولة ورسوم الفحص تظهر في قسم مستقل حتى يبقى الشرح شفافاً." data-en="What is covered and what is not. Uncovered lens upgrades and exam fees sit in their own block so the explanation stays transparent.">ما يغطيه التأمين وما لا يغطيه. ترقيات العدسة غير المشمولة ورسوم الفحص تظهر في قسم مستقل حتى يبقى الشرح شفافاً.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="الخصومات والزوج الثاني" data-en="Discounts & second pair">الخصومات والزوج الثاني</p>
+        <h2 data-reveal>قواعد العرض<br><span class="dim">بضغطة واحدة</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="عند تفعيل الزوج الثاني تظهر حاسبة ثانية للزوج الإضافي ويُجمع المجموعان في شاشة واحدة. وعند الرغبة في احتساب أي مبلغ خصم للزبون يُحسب فورياً. لا مزيد من تضييع الفرص أو نسيان الخصومات — زيادة فورية لمبلغ الفاتورة تحقّق أهداف الشهر للفرع." data-en="Turn on the second pair and a second calculator appears; both totals sit on one screen. Any customer discount calculates instantly. No missed company offers — an immediate lift toward the branch monthly target.">عند تفعيل الزوج الثاني تظهر حاسبة ثانية للزوج الإضافي ويُجمع المجموعان في شاشة واحدة. وعند الرغبة في احتساب أي مبلغ خصم للزبون يُحسب فورياً. لا مزيد من تضييع الفرص أو نسيان الخصومات — زيادة فورية لمبلغ الفاتورة تحقّق أهداف الشهر للفرع.</p>
+    </div>
+    <div class="toggles">
+      <button type="button" class="chip on" id="pair2Btn" data-ar="الزوج الثاني" data-en="Second pair">الزوج الثاني</button>
+      <button type="button" class="chip" id="corpBtn" data-ar="خصم الشركة (750)" data-en="Company discount (750)">خصم الشركة (750)</button>
+    </div>
+    <div id="pairWrap">
+      <div id="demoPair" class="pos-demo">
+        <div class="demo">
+          <div class="pos">
+            <div class="steps">
+              <span data-ar="الإطار" data-en="Frame">الإطار</span>
+              <span class="on" data-ar="الرؤية" data-en="Vision">الرؤية</span>
+              <span data-ar="العدسة" data-en="Lens">العدسة</span>
+            </div>
+            <div class="boxy">
+              <h4 data-ar="سعر إطار النظارة الثانية" data-en="2nd pair frame">سعر إطار النظارة الثانية</h4>
+              <input type="number" id="p2frameIn" min="0" value="1500" dir="ltr">
+            </div>
+            <div class="boxy">
+              <h4 data-ar="عدسات النظارة الثانية" data-en="2nd pair lenses">عدسات النظارة الثانية</h4>
+              <label class="lbl" data-ar="احتياج العميل (الرؤية)" data-en="Vision need">احتياج العميل (الرؤية)</label>
+              <select id="p2lensIn">
+                <option value="650" selected>Single Vision — 650</option>
+                <option value="1600">Single Vision Premium — 1,600</option>
+                <option value="1900">Anti-Fatigue — 1,900</option>
+                <option value="2400">Progressive — 2,400</option>
+              </select>
+              <label class="lbl" data-ar="الخدمات والإضافات الاختيارية" data-en="Add-ons">الخدمات والإضافات الاختيارية</label>
+              <div class="addons">
+                <button type="button" class="addon" data-add="50">🎨 تلوين كامل (+50)</button>
+                <button type="button" class="addon" data-add="120">💻 بلو لايت (+120)</button>
+                <button type="button" class="addon" data-add="130">🚗 قيادة ليلية (+130)</button>
+                <button type="button" class="addon" data-add="100">🕶️ ميرور (+100)</button>
+              </div>
+            </div>
+          </div>
+          <div class="price-display">
+            <div class="price-k" data-ar="الإجمالي (النظارة الثانية — عرض)" data-en="Total (2nd pair offer)">الإجمالي (النظارة الثانية — عرض)</div>
+            <div class="price-tag"><small>SAR</small><span id="p2bPay">2,150</span></div>
+            <div class="win">
+              <div class="sec">
+                <div class="sec-title" data-ar="الأسعار" data-en="Prices">الأسعار</div>
+                <div class="ln"><span data-ar="سعر الإطار" data-en="Frame">سعر الإطار</span><b id="p2bFrame">1,500 SAR</b></div>
+                <div class="ln"><span data-ar="سعر العدسات" data-en="Lenses">سعر العدسات</span><b id="p2bLens">650 SAR</b></div>
+                <div class="ln" id="p2discRow" style="display:none"><span data-ar="الخصم" data-en="Discount">الخصم</span><b id="p2bDisc">- 750 SAR</b></div>
+                <div class="ln"><span data-ar="الإجمالي قبل التأمين" data-en="Before insurance">الإجمالي قبل التأمين</span><b id="p2bSum">2,150 SAR</b></div>
+              </div>
+              <div class="sec sec-fin">
+                <div class="ln big gold"><span data-ar="المجموع كامل" data-en="Grand total">المجموع كامل</span><b id="p2bGrand">2,150 SAR</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="both-board pos-demo" id="bothBoard">
+        <h3 data-ar="إجمالي النظارتين معاً" data-en="Both pairs together">إجمالي النظارتين معاً</h3>
+        <div class="both-row">
+          <div class="pair-title" data-ar="الإجمالي (النظارة الأولى)" data-en="1st pair">الإجمالي (النظارة الأولى)</div>
+          <div class="win">
+            <div class="sec">
+              <div class="sec-title" data-ar="الأسعار" data-en="Prices">الأسعار</div>
+              <div class="ln"><span data-ar="سعر الإطار" data-en="Frame">سعر الإطار</span><b id="c1Frame">1,500 SAR</b></div>
+              <div class="ln"><span data-ar="سعر العدسات" data-en="Lenses">سعر العدسات</span><b id="c1Lens">650 SAR</b></div>
+              <div class="ln"><span data-ar="الإجمالي قبل التأمين" data-en="Before insurance">الإجمالي قبل التأمين</span><b id="c1Sum">2,150 SAR</b></div>
+            </div>
+          </div>
+          <div class="win">
+            <div class="sec sec-ins">
+              <div class="sec-title" data-ar="تغطية التأمين" data-en="Insurance">تغطية التأمين</div>
+              <div class="ln ins"><span data-ar="تغطية الإطار من التأمين" data-en="Frame cover">تغطية الإطار من التأمين</span><b id="c1FrIns">- 0 SAR</b></div>
+              <div class="ln ins"><span data-ar="متبقي من سعر الإطار" data-en="Frame remain">متبقي من سعر الإطار</span><b id="c1FrRem">0 SAR</b></div>
+              <div class="ln ins"><span data-ar="تغطية العدسات من التأمين" data-en="Lens cover">تغطية العدسات من التأمين</span><b id="c1LnIns">- 0 SAR</b></div>
+              <div class="ln ins"><span data-ar="متبقي من سعر العدسات" data-en="Lens remain">متبقي من سعر العدسات</span><b id="c1LnRem">0 SAR</b></div>
+              <div class="ln ins"><span data-ar="إجمالي تغطية التأمين" data-en="Insurance total">إجمالي تغطية التأمين</span><b id="c1Ins">- 0 SAR</b></div>
+            </div>
+          </div>
+          <div class="win">
+            <div class="sec sec-pay">
+              <div class="sec-title" data-ar="مبالغ يتحملها العميل" data-en="Customer pays">مبالغ يتحملها العميل</div>
+              <div class="ln gold"><span data-ar="نسبة التحمل" data-en="Copay">نسبة التحمل</span><b id="c1Copay">0 SAR</b></div>
+              <div class="ln gold"><span data-ar="مجموع غير المغطى" data-en="Uncovered">مجموع غير المغطى</span><b id="c1Unc">0 SAR</b></div>
+            </div>
+            <div class="sec sec-fin">
+              <div class="ln big gold"><span data-ar="المجموع كامل" data-en="Grand total">المجموع كامل</span><b id="c1Pay">2,150 SAR</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="both-row">
+          <div class="pair-title" data-ar="النظارة الثانية (عرض)" data-en="2nd pair (offer)">النظارة الثانية (عرض)</div>
+          <div class="win">
+            <div class="sec">
+              <div class="sec-title" data-ar="الأسعار" data-en="Prices">الأسعار</div>
+              <div class="ln"><span data-ar="سعر الإطار" data-en="Frame">سعر الإطار</span><b id="c2Frame">1,500 SAR</b></div>
+              <div class="ln"><span data-ar="سعر العدسات" data-en="Lenses">سعر العدسات</span><b id="c2Lens">650 SAR</b></div>
+              <div class="ln" id="c2discRow" style="display:none"><span data-ar="الخصم" data-en="Discount">الخصم</span><b id="c2Disc">- 750 SAR</b></div>
+              <div class="ln"><span data-ar="الإجمالي قبل التأمين" data-en="Before insurance">الإجمالي قبل التأمين</span><b id="c2Sum">2,150 SAR</b></div>
+            </div>
+          </div>
+          <div class="win">
+            <div class="sec sec-ins">
+              <div class="sec-title" data-ar="تغطية التأمين" data-en="Insurance">تغطية التأمين</div>
+              <div class="ln ins"><span data-ar="لا يغطي التأمين هذه النظارة" data-en="Insurance does not cover this pair">لا يغطي التأمين هذه النظارة</span><b>0 SAR</b></div>
+              <div class="ln ins"><span data-ar="تغطية الإطار من التأمين" data-en="Frame cover">تغطية الإطار من التأمين</span><b id="c2FrIns">- 0 SAR</b></div>
+              <div class="ln ins"><span data-ar="متبقي من سعر الإطار" data-en="Frame remain">متبقي من سعر الإطار</span><b id="c2FrRem">1,500 SAR</b></div>
+              <div class="ln ins"><span data-ar="تغطية العدسات من التأمين" data-en="Lens cover">تغطية العدسات من التأمين</span><b id="c2LnIns">- 0 SAR</b></div>
+              <div class="ln ins"><span data-ar="متبقي من سعر العدسات" data-en="Lens remain">متبقي من سعر العدسات</span><b id="c2LnRem">650 SAR</b></div>
+              <div class="ln ins"><span data-ar="إجمالي تغطية التأمين" data-en="Insurance total">إجمالي تغطية التأمين</span><b id="c2Ins">- 0 SAR</b></div>
+            </div>
+          </div>
+          <div class="win">
+            <div class="sec sec-pay">
+              <div class="sec-title" data-ar="مبالغ يتحملها العميل" data-en="Customer pays">مبالغ يتحملها العميل</div>
+              <div class="ln gold"><span data-ar="نسبة التحمل" data-en="Copay">نسبة التحمل</span><b id="c2Copay">0 SAR</b></div>
+              <div class="ln gold"><span data-ar="مجموع غير المغطى" data-en="Uncovered">مجموع غير المغطى</span><b id="c2Unc">0 SAR</b></div>
+            </div>
+            <div class="sec sec-fin">
+              <div class="ln big gold"><span data-ar="المجموع كامل" data-en="Grand total">المجموع كامل</span><b id="c2Pay">2,150 SAR</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="both-foot">
+          <div><small data-ar="قبل الخصم والتأمين" data-en="Before discount & insurance">قبل الخصم والتأمين</small><b id="cBefore">4,300 SAR</b></div>
+          <div style="text-align:end"><small data-ar="بعده (المطلوب دفعه)" data-en="After (amount due)">بعده (المطلوب دفعه)</small><b id="cAfter">4,300 SAR</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="بطاقات الترقية" data-en="Upgrade cards">بطاقات الترقية</p>
+        <h2 data-reveal>فرصة بيع أوضح<br><span class="dim">وفرق السعر جاهز</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="الفائدة للفرع: رفع متوسط الفاتورة (ATV) بأسلوب احترافي يخدم العميل. البطاقات فوق تضيف الفرق على السعر الأساسي بضغطة." data-en="For the branch: raise ATV professionally. The cards above add the gap to the base price in one tap.">الفائدة للفرع: رفع متوسط الفاتورة (ATV) بأسلوب احترافي يخدم العميل. البطاقات فوق تضيف الفرق على السعر الأساسي بضغطة.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small data-ar="ترقية" data-en="Upgrade">ترقية</small>
+        <h3 data-ar="حساب الفارق للعدسة الأعلى" data-en="Gap to the higher lens">حساب الفارق للعدسة الأعلى</h3>
+        <p data-ar="بطاقات تعرض الفئة الأعلى مع فرق المبلغ. ضغطة واحدة تحدّث الاختيار والمجموع." data-en="Cards show the higher tier with the riyal gap. One tap updates the choice and the total.">بطاقات تعرض الفئة الأعلى مع فرق المبلغ. ضغطة واحدة تحدّث الاختيار والمجموع.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="تنزيل" data-en="Step down">تنزيل</small>
+        <h3 data-ar="خيار أنسب للميزانية" data-en="A fit for the budget">خيار أنسب للميزانية</h3>
+        <p data-ar="إن أراد العميل مستوى أقل، تظهر بدائل أقل لعدم خسارة العميل." data-en="If the customer wants a lower level, cheaper options appear so the sale is not lost.">إن أراد العميل مستوى أقل، تظهر بدائل أقل لعدم خسارة العميل.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="استغلال التأمين" data-en="Use insurance">استغلال التأمين</small>
+        <h3 data-ar="أقصى استفادة من التغطية" data-en="Maximum cover">أقصى استفادة من التغطية</h3>
+        <p data-ar="يقترح النظام ترقية تستفيد من مبلغ التأمين المتاح: فئة أو سماكة أعلى ضمن السقف." data-en="The system suggests an upgrade that uses leftover cover: a higher category or index within the cap.">يقترح النظام ترقية تستفيد من مبلغ التأمين المتاح: فئة أو سماكة أعلى ضمن السقف.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="استمرارية البيع" data-en="Sale continuity">استمرارية البيع</p>
+        <h2 data-reveal>العرض يُحفظ ويُطبع<br><span class="dim">والعميل يعود جاهزاً</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="عميل يقول «أفكر وأرجع» يجد عرضه جاهزاً — والفاتورة تُستكمل في أي وقت." data-en="A customer who says “I’ll think and come back” finds the quote waiting — the bill can be finished any time.">عميل يقول «أفكر وأرجع» يجد عرضه جاهزاً — والفاتورة تُستكمل في أي وقت.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small data-ar="حفظ" data-en="Save">حفظ</small>
+        <h3 data-ar="أرشيف عروض العميل" data-en="Quote archive">أرشيف عروض العميل</h3>
+        <p data-ar="زر حفظ يخزّن العرض على حساب الفرع: العدسة، الإطار، التأمين، والمجموع." data-en="Save stores the quote on the branch account: lens, frame, insurance, and total.">زر حفظ يخزّن العرض على حساب الفرع: العدسة، الإطار، التأمين، والمجموع.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>A4</small>
+        <h3 data-ar="طباعة — تأجيل الفاتورة في أوقات الذروة" data-en="Print — defer the bill at peak">طباعة — تأجيل الفاتورة في أوقات الذروة</h3>
+        <p data-ar="تقرير أنيق بنوع العدسات والإطار والسعر الكلي بشكل تفصيلي بكامل معلومات العميل والفاتورة لعملها في أي وقت." data-en="A clean report with lens type, frame, and full price, plus customer details, to complete later.">تقرير أنيق بنوع العدسات والإطار والسعر الكلي بشكل تفصيلي بكامل معلومات العميل والفاتورة لعملها في أي وقت.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="عربي / إنجليزي" data-en="AR / EN">عربي / إنجليزي</small>
+        <h3 data-ar="واجهة متعددة اللغة" data-en="Bilingual UI">واجهة متعددة اللغة</h3>
+        <p data-ar="تبديل فوري لكل النصوص والحسابات. مناسب لفريق لا يجيد اللغة ولعملاء يتحدثون لغات مختلفة." data-en="Instant switch for every label and figure. For mixed teams and customers who speak different languages.">تبديل فوري لكل النصوص والحسابات. مناسب لفريق لا يجيد اللغة ولعملاء يتحدثون لغات مختلفة.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="lab" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="بعد الاتفاق — الورشة" data-en="After agreement — lab">بعد الاتفاق — الورشة</p>
+        <h2 data-reveal>ورشة ← جاهز<br><span class="dim">← تسليم</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="لوحة واحدة. استفسار العميل يُجاب بالاستعلام عن رقم الجوال. استخراج معلومات العميل بضغطة زر من الفاتورة الأصلية — وداعاً للأخطاء البشرية." data-en="One board. A customer question is answered by looking up the mobile number. Pull customer data from the original bill in one tap — no retyping errors.">لوحة واحدة. استفسار العميل يُجاب بالاستعلام عن رقم الجوال. استخراج معلومات العميل بضغطة زر من الفاتورة الأصلية — وداعاً للأخطاء البشرية.</p>
+    </div>
+    <div class="pipeline" id="pipes">
+      <div class="pipe on" data-reveal><small>1</small><h3 data-ar="ورشة" data-en="Lab">ورشة</h3></div>
+      <div class="pipe" data-reveal><small>2</small><h3 data-ar="تراي" data-en="Trays">تراي</h3></div>
+      <div class="pipe" data-reveal><small>3</small><h3 data-ar="واتساب" data-en="WhatsApp">واتساب</h3></div>
+      <div class="pipe" data-reveal><small>4</small><h3 data-ar="تسليم" data-en="Handover">تسليم</h3></div>
+    </div>
+    <div class="honor">
+      <div class="hrow" data-reveal><span>01</span><span data-ar="تتبع — حالة كل طلب بثواني" data-en="Track — every job in seconds">تتبع — حالة كل طلب بثواني</span><em data-ar="استعلام برقم الجوال" data-en="Lookup by mobile">استعلام برقم الجوال</em></div>
+      <div class="hrow" data-reveal><span>02</span><span data-ar="سجل — تاريخ كامل لكل خطوة" data-en="Log — full history">سجل — تاريخ كامل لكل خطوة</span><em data-ar="من أنشأ الطلب ومتى انتقل حتى الاستلام" data-en="Who created it and every status until pickup">من أنشأ الطلب ومتى انتقل حتى الاستلام</em></div>
+      <div class="hrow" data-reveal><span>03</span><span data-ar="تراي — تعيين تلقائي للشاغر" data-en="Trays — auto to the empty tray">تراي — تعيين تلقائي للشاغر</span><em data-ar="النظام يستلم الطلبات ويقسمها إلى أقرب تراي فاضٍ" data-en="Jobs land in the nearest free tray">النظام يستلم الطلبات ويقسمها إلى أقرب تراي فاضٍ</em></div>
+      <div class="hrow" data-reveal><span>04</span><span data-ar="واتساب — نص معتمد لكل الفروع" data-en="WhatsApp — one approved text">واتساب — نص معتمد لكل الفروع</span><em data-ar="رسالة الجاهزية بالعربي والإنجليزي مع رقم التراي بضغطة زر" data-en="Ready message in AR/EN with tray number in one tap">رسالة الجاهزية بالعربي والإنجليزي مع رقم التراي بضغطة زر</em></div>
+    </div>
+  </section>
+
+  <section class="block" id="cl" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="السعي للاحترافية في العدسات" data-en="Contact-lens professionalism">السعي للاحترافية في العدسات</p>
+        <h2 data-reveal>حاسبة العدسات<br><span class="dim">اللاصقة</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="خدمة العميل بأكمل وأسرع وجه، وعدم انتظاره لمعرفة توافر العدسات. لا مزيد من الأخطاء في العدسات في أوقات الذروة." data-en="Serve the customer fully and fast — no waiting just to know if the lenses are in stock. No more Rx mistakes at peak.">خدمة العميل بأكمل وأسرع وجه، وعدم انتظاره لمعرفة توافر العدسات. لا مزيد من الأخطاء في العدسات في أوقات الذروة.</p>
+    </div>
+    <div class="grid g2">
+      <article class="card" data-reveal>
+        <small data-ar="السرعة" data-en="Speed">السرعة</small>
+        <h3 data-ar="التحقق من وجود العدسات بكافة أنواعها" data-en="Check every lens type in stock">التحقق من وجود العدسات بكافة أنواعها</h3>
+        <p data-ar="توفر فوري عبر كل الأنواع قبل أن ينتظر العميل." data-en="Instant availability across types before the customer waits.">توفر فوري عبر كل الأنواع قبل أن ينتظر العميل.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="حاسبة رقمية دقيقة" data-en="Precise digital Rx">حاسبة رقمية دقيقة</small>
+        <h3 data-ar="حساب الوصفة بضغطة واحدة" data-en="Convert the Rx in one tap">حساب الوصفة بضغطة واحدة</h3>
+        <p data-ar="دون الرجوع للمختص في أوقات الذروة." data-en="Without calling a specialist at peak hours.">دون الرجوع للمختص في أوقات الذروة.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="ship" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="الطلب من فرع آخر" data-en="Inter-branch request">الطلب من فرع آخر</p>
+        <h2 data-reveal>استفسار موحّد<br><span class="dim">وتحويل موثّق</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="هوية موحدة بين جميع الفروع. توحيد لرسائل الطلبات وإرسال البوليصات بشكل مرتب يليق بشركة مغربي." data-en="One identity across branches. Unified request emails and waybills — tidy, Magrabi-grade.">هوية موحدة بين جميع الفروع. توحيد لرسائل الطلبات وإرسال البوليصات بشكل مرتب يليق بشركة مغربي.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small data-ar="طلب" data-en="Request">طلب</small>
+        <h3 data-ar="إيميل لفرع أو لعدة فروع" data-en="Email one or many branches">إيميل لفرع أو لعدة فروع</h3>
+        <p data-ar="طلب إطار من فرع آخر بضغطة زر برسالة موحّدة تشمل جميع بيانات الطلب، مع إمكانية الإرسال لأكثر من فرع في نفس الوقت." data-en="Request a frame from another branch in one tap — one message with every field, to one or many branches at once.">طلب إطار من فرع آخر بضغطة زر برسالة موحّدة تشمل جميع بيانات الطلب، مع إمكانية الإرسال لأكثر من فرع في نفس الوقت.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="تحويل" data-en="Transfer">تحويل</small>
+        <h3 data-ar="بوليصة بين الفروع" data-en="Inter-branch waybill">بوليصة بين الفروع</h3>
+        <p data-ar="إصدار بوليصة الشحن بكامل البيانات بسهولة وهوية موحّدة. وضوح الطلب بين الفروع وسهولة توصيله." data-en="Issue a complete waybill easily, same identity. The request is clear between branches and easy to deliver.">إصدار بوليصة الشحن بكامل البيانات بسهولة وهوية موحّدة. وضوح الطلب بين الفروع وسهولة توصيله.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="نموذج موحّد" data-en="One template">نموذج موحّد</small>
+        <h3 data-ar="توحيد لنموذج الإرسال" data-en="One send format">توحيد لنموذج الإرسال</h3>
+        <p data-ar="نفس الرسالة ونفس البوليصة في كل فرع." data-en="The same letter and the same waybill in every branch.">نفس الرسالة ونفس البوليصة في كل فرع.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="التوصيل المنزلي" data-en="Home delivery">التوصيل المنزلي</p>
+        <h2 data-reveal>بوليصة ذكية<br><span class="dim">QR</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="بيانات العميل تأتي من نفس الطلب: مسار واحد من الحاسبة إلى الورشة إلى البوليصة." data-en="Customer data comes from the same order: calculator → lab → waybill.">بيانات العميل تأتي من نفس الطلب: مسار واحد من الحاسبة إلى الورشة إلى البوليصة.</p>
+    </div>
+    <div class="grid g3">
+      <article class="card" data-reveal>
+        <small>QR</small>
+        <h3 data-ar="سكان بدل إعادة الكتابة" data-en="Scan instead of retyping">سكان بدل إعادة الكتابة</h3>
+        <p data-ar="إدخال بيانات العميل في رابط التوصيل بدون أي أخطاء عن طريق الـ SCAN — تقليل التأخير على العميل." data-en="Load customer data into the delivery link with SCAN — no typing errors, less delay.">إدخال بيانات العميل في رابط التوصيل بدون أي أخطاء عن طريق الـ SCAN — تقليل التأخير على العميل.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small data-ar="التحقق من الشحنات" data-en="Verify shipments">التحقق من الشحنات</small>
+        <h3 data-ar="التأكد من الرابط قبل الإرسال" data-en="Check the link before send">التأكد من الرابط قبل الإرسال</h3>
+        <p data-ar="التأكد من الرابط قبل إرسال الطلب لشركة التوصيل." data-en="Confirm the link before the job goes to the courier.">التأكد من الرابط قبل إرسال الطلب لشركة التوصيل.</p>
+      </article>
+      <article class="card" data-reveal>
+        <small>0%</small>
+        <h3 data-ar="استخراج البوليصة تلقائي" data-en="Auto waybill">استخراج البوليصة تلقائي</h3>
+        <p data-ar="بضغطة زر تُستخرج بوليصة الشحن للعميل بكامل بياناته من الفاتورة بنسبة خطأ 0%." data-en="One tap extracts a full waybill from the invoice — target error 0%.">بضغطة زر تُستخرج بوليصة الشحن للعميل بكامل بياناته من الفاتورة بنسبة خطأ 0%.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="ماذا يضيف النظام يومياً؟" data-en="What it adds every day">ماذا يضيف النظام يومياً؟</p>
+        <h2 data-reveal>فائدة واضحة<br><span class="dim">للعميل وللفرع</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="النظام طبقة مساعدة للموظف: يسرّع القرار، يثبّت الجودة، ويبقي العميل مطمئناً من أول سؤال حتى الاستلام." data-en="A layer beside the staff member: faster decisions, steady quality, a calm customer from the first question to handover.">النظام طبقة مساعدة للموظف: يسرّع القرار، يثبّت الجودة، ويبقي العميل مطمئناً من أول سؤال حتى الاستلام.</p>
+    </div>
+    <div class="grid g4">
+      <div class="stat" data-reveal><b>ثوانٍ</b><span data-ar="سرعة الخدمة — سعر وجاهزية وإجابة" data-en="Speed — price, status, an answer">سرعة الخدمة — سعر وجاهزية وإجابة</span></div>
+      <div class="stat" data-reveal><b>0%</b><span data-ar="دقة التحصيل — هدف تقليل الخطأ" data-en="Collection accuracy — near-zero error">دقة التحصيل — هدف تقليل الخطأ</span></div>
+      <div class="stat" data-reveal><b>ATV</b><span data-ar="ترقية ظاهرة بفرق واضح" data-en="Visible upgrade, clear gap">ترقية ظاهرة بفرق واضح</span></div>
+      <div class="stat" data-reveal><b>1</b><span data-ar="تجربة موحّدة — نفس الأسلوب في كل فرع" data-en="One experience in every branch">تجربة موحّدة — نفس الأسلوب في كل فرع</span></div>
+    </div>
+  </section>
+
+  <section class="block" data-snap>
+    <div class="sec-head">
+      <div>
+        <p class="kicker" data-reveal data-ar="الخلاصة" data-en="Close">الخلاصة</p>
+        <h2 data-reveal>منصة جاهزة<br><span class="dim">وتعمل في سوليتير مول</span></h2>
+      </div>
+      <p class="lead" data-reveal data-ar="بُنيت على مدى ثلاثة أشهر من احتياج حقيقي في الفرع — حاسبة الأسعار أولاً، ثم الورشة والفروع والعدسات والشحن. المشروع جاهز للتجربة في فروع إضافية: نفس الأدوات، نفس المنطق، ونفس وضوح السعر أمام العميل." data-en="Built over three months from real branch need — prices first, then lab, branches, lenses, shipping. Ready to try in more branches: same tools, same logic, the same clear price in front of the customer.">بُنيت على مدى ثلاثة أشهر من احتياج حقيقي في الفرع — حاسبة الأسعار أولاً، ثم الورشة والفروع والعدسات والشحن. المشروع جاهز للتجربة في فروع إضافية: نفس الأدوات، نفس المنطق، ونفس وضوح السعر أمام العميل.</p>
+    </div>
+    <p style="font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-.04em" data-reveal>Magrabi Smart POS</p>
+  </section>
+
+  <footer data-reveal>Magrabi Smart POS · 2026 · Developed by Dr. Muhannad Almushayqih</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
+  <script>
+    const lenis = new Lenis({
+      lerp: 0.07,
+      wheelMultiplier: 0.85,
+      smoothWheel: true,
+      syncTouch: true
+    });
+
+    const heroScale = document.getElementById('heroScale');
+    const heroCopy = document.getElementById('heroCopy');
+    const heroCredit = document.getElementById('heroCredit');
+    const reveals = [...document.querySelectorAll('[data-reveal]')].filter(el => !el.closest('#demoCalc') && !el.closest('#demoPair') && !el.closest('#bothBoard'));
+
+    function motion() {
+      const y = window.scrollY;
+      const vh = innerHeight;
+      const p = Math.min(1, y / (vh * 0.9));
+      heroScale.style.transform = `scale(${1 + p * 0.22}) translateY(${p * 40}px)`;
+      heroCopy.style.opacity = String(1 - p * 0.85);
+      heroCopy.style.transform = `translateY(${p * 80}px)`;
+      heroCredit.style.opacity = String(1 - p * 0.85);
+      heroCredit.style.transform = `translateY(${p * 40}px)`;
+
+      reveals.forEach(el => {
+        const r = el.getBoundingClientRect();
+        const start = vh * 0.88;
+        const t = Math.min(1, Math.max(0, (start - r.top) / 220));
+        el.style.opacity = t;
+        el.style.transform = `translate3d(0, ${(1 - t) * 56}px, 0)`;
+      });
+    }
+
+    function raf(time) {
+      lenis.raf(time);
+      motion();
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    const fmt = n => n.toLocaleString('en-US');
+    let lang = 'ar';
+    let insOn = false;
+    let pair2 = true, corp = false;
+    const insBtn = document.getElementById('insBtn');
+    const insPanel = document.getElementById('insPanel');
+    let splitOn = false;
+    let lastFirst = { frame: 1500, lens: 650, sum: 2150, frIns: 0, frRem: 1500, lnIns: 0, lnRem: 650, insPays: 0, copay: 0, pay: 2150 };
+    const splitBtn = document.getElementById('splitBtn');
+    const splitExtra = document.getElementById('splitExtra');
+    const sar = n => fmt(n) + ' SAR';
+    function leftoverCover(frame, lens) {
+      const cov = Math.max(0, parseFloat(document.getElementById('covIn').value) || 0);
+      const cap = Math.max(0, parseFloat(document.getElementById('frameCapIn').value) || 0);
+      if (splitOn) return Math.max(0, Math.max(0, cov - cap) - lens);
+      const unused = Math.max(0, cov - (frame + lens));
+      if (unused > 0) return unused;
+      return Math.max(0, Math.max(0, cov - cap) - lens);
+    }
+    function demoTotal() {
+      const frame = Math.max(0, parseFloat(document.getElementById('frameIn').value) || 0);
+      const baseLens = Math.max(0, parseFloat(document.getElementById('lensIn').value) || 0);
+      const extras = [...document.querySelectorAll('#demoCalc .addon.on')].reduce((s, b) => s + (+b.dataset.add || 0), 0);
+      const maxCard = document.querySelector('#demoCalc .up-max');
+      const fixedUp = [...document.querySelectorAll('#demoCalc .upcard.on:not(.up-max)')].reduce((s, b) => s + (+b.dataset.add || 0), 0);
+      const lensBeforeMax = baseLens + extras + fixedUp;
+      const leftover = leftoverCover(frame, lensBeforeMax);
+      if (maxCard) {
+        maxCard.dataset.add = leftover;
+        const gapEl = document.getElementById('maxGap');
+        if (gapEl) gapEl.textContent = (lang === 'ar' ? 'الفرق الإضافي: + SAR ' : 'Extra gap: + SAR ') + leftover;
+      }
+      const maxAdd = maxCard && maxCard.classList.contains('on') ? leftover : 0;
+      const upgrades = fixedUp + maxAdd;
+      const lens = baseLens + extras + upgrades;
+      const sum = frame + lens;
+      const cov = insOn ? Math.max(0, parseFloat(document.getElementById('covIn').value) || 0) : 0;
+      const copay = insOn ? Math.max(0, parseFloat(document.getElementById('copayIn').value) || 0) : 0;
+      const cap = Math.max(0, parseFloat(document.getElementById('frameCapIn').value) || 0);
+      let frIns = 0, lnIns = 0;
+      if (insOn) {
+        if (splitOn) {
+          frIns = frame > 0 ? Math.min(frame, cap) : 0;
+          lnIns = Math.min(lens, Math.max(0, cov - cap));
+        } else {
+          const covered = Math.min(sum, cov);
+          frIns = Math.min(frame, covered);
+          lnIns = Math.min(lens, Math.max(0, covered - frIns));
+        }
+      }
+      const insPays = frIns + lnIns;
+      const frRem = frame - frIns;
+      const lnRem = lens - lnIns;
+      const pay = frRem + lnRem + copay;
+      document.getElementById('bFrame').textContent = sar(frame);
+      document.getElementById('bLens').textContent = sar(baseLens + extras);
+      document.getElementById('upRow').style.display = upgrades ? '' : 'none';
+      document.getElementById('bUp').textContent = sar(upgrades);
+      document.getElementById('bSum').textContent = sar(sum);
+      document.getElementById('sumLbl').textContent = insOn ? (lang === 'ar' ? 'الإجمالي قبل التأمين' : 'Before insurance') : (lang === 'ar' ? 'الإجمالي' : 'Subtotal');
+      document.getElementById('insBlock').style.display = insOn ? '' : 'none';
+      document.getElementById('payBlock').style.display = insOn ? '' : 'none';
+      document.getElementById('insLeftRow').style.display = insOn && !splitOn ? '' : 'none';
+      document.getElementById('bFrIns').textContent = '- ' + sar(frIns);
+      document.getElementById('bFrRem').textContent = sar(frRem);
+      document.getElementById('bLnIns').textContent = '- ' + sar(lnIns);
+      document.getElementById('bLnRem').textContent = sar(lnRem);
+      document.getElementById('bInsLeft').textContent = sar(Math.max(0, cov - insPays));
+      document.getElementById('bIns').textContent = '- ' + sar(insPays);
+      document.getElementById('bCopay').textContent = sar(copay);
+      document.getElementById('bUnc').textContent = sar(copay);
+      document.getElementById('bPay').textContent = fmt(pay);
+      document.getElementById('bGrand').textContent = sar(pay);
+      lastFirst = { frame, lens: baseLens + extras + upgrades, sum, frIns, frRem, lnIns, lnRem, insPays, copay, pay };
+      if (typeof pair2Total === 'function') pair2Total();
+      document.querySelectorAll('#demoCalc .upcard').forEach(card => {
+        const add = +card.dataset.add || 0;
+        const after = frame + lensBeforeMax + (card.classList.contains('on') ? 0 : add) + (card.classList.contains('up-max') ? 0 : maxAdd);
+        const afterEl = card.querySelector('.after');
+        const gapEl = card.querySelector('.gap');
+        if (gapEl && !card.classList.contains('up-max')) {
+          gapEl.textContent = (lang === 'ar' ? 'الفرق الإضافي: + SAR ' : 'Extra gap: + SAR ') + add;
+        }
+        if (afterEl) {
+          afterEl.textContent = (lang === 'ar' ? '(المطلوب بعد الترقية: SAR ' : '(After upgrade: SAR ') + fmt(after) + ')';
+        }
+      });
+    }
+    insBtn.addEventListener('click', () => {
+      insOn = !insOn;
+      insBtn.classList.toggle('on', insOn);
+      insPanel.classList.toggle('open', insOn);
+      demoTotal();
+      if (insOn) insPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    splitBtn.addEventListener('click', () => {
+      splitOn = !splitOn;
+      splitBtn.classList.toggle('on', splitOn);
+      splitExtra.classList.toggle('open', splitOn);
+      demoTotal();
+    });
+    document.querySelectorAll('#demoCalc .addon').forEach(btn => {
+      btn.addEventListener('click', () => { btn.classList.toggle('on'); demoTotal(); });
+    });
+    document.querySelectorAll('#demoCalc .upcard').forEach(btn => {
+      btn.addEventListener('click', () => { btn.classList.toggle('on'); demoTotal(); });
+    });
+    ['frameIn', 'lensIn', 'covIn', 'copayIn', 'frameCapIn'].forEach(id => {
+      document.getElementById(id).addEventListener('input', demoTotal);
+    });
+    demoTotal();
+
+    function pair2Total() {
+      const frame = Math.max(0, parseFloat(document.getElementById('p2frameIn').value) || 0);
+      const baseLens = Math.max(0, parseFloat(document.getElementById('p2lensIn').value) || 0);
+      const extras = [...document.querySelectorAll('#demoPair .addon.on')].reduce((s, b) => s + (+b.dataset.add || 0), 0);
+      const lens = baseLens + extras;
+      const disc = (pair2 && corp) ? 750 : 0;
+      const gross = frame + lens;
+      const sum = Math.max(0, gross - disc);
+      document.getElementById('p2bFrame').textContent = sar(frame);
+      document.getElementById('p2bLens').textContent = sar(lens);
+      document.getElementById('p2discRow').style.display = disc ? '' : 'none';
+      document.getElementById('p2bDisc').textContent = '- ' + sar(disc);
+      document.getElementById('p2bSum').textContent = sar(sum);
+      document.getElementById('p2bPay').textContent = fmt(sum);
+      document.getElementById('p2bGrand').textContent = sar(sum);
+      const p1 = lastFirst;
+      const p2pay = pair2 ? sum : 0;
+      const p2gross = pair2 ? gross : 0;
+      document.getElementById('c1Frame').textContent = sar(p1.frame);
+      document.getElementById('c1Lens').textContent = sar(p1.lens);
+      document.getElementById('c1Sum').textContent = sar(p1.sum);
+      document.getElementById('c1FrIns').textContent = '- ' + sar(p1.frIns);
+      document.getElementById('c1FrRem').textContent = sar(p1.frRem);
+      document.getElementById('c1LnIns').textContent = '- ' + sar(p1.lnIns);
+      document.getElementById('c1LnRem').textContent = sar(p1.lnRem);
+      document.getElementById('c1Ins').textContent = '- ' + sar(p1.insPays);
+      document.getElementById('c1Copay').textContent = sar(p1.copay);
+      document.getElementById('c1Unc').textContent = sar(p1.copay);
+      document.getElementById('c1Pay').textContent = sar(p1.pay);
+      document.getElementById('c2Frame').textContent = sar(pair2 ? frame : 0);
+      document.getElementById('c2Lens').textContent = sar(pair2 ? lens : 0);
+      document.getElementById('c2discRow').style.display = disc ? '' : 'none';
+      document.getElementById('c2Disc').textContent = '- ' + sar(disc);
+      document.getElementById('c2Sum').textContent = sar(pair2 ? sum : 0);
+      document.getElementById('c2FrIns').textContent = '- 0 SAR';
+      document.getElementById('c2FrRem').textContent = sar(pair2 ? frame : 0);
+      document.getElementById('c2LnIns').textContent = '- 0 SAR';
+      document.getElementById('c2LnRem').textContent = sar(pair2 ? lens : 0);
+      document.getElementById('c2Ins').textContent = '- 0 SAR';
+      document.getElementById('c2Copay').textContent = sar(0);
+      document.getElementById('c2Unc').textContent = sar(0);
+      document.getElementById('c2Pay').textContent = sar(p2pay);
+      document.getElementById('cBefore').textContent = sar(p1.sum + p2gross);
+      document.getElementById('cAfter').textContent = sar(p1.pay + p2pay);
+    }
+    document.getElementById('pair2Btn').addEventListener('click', () => {
+      pair2 = !pair2;
+      document.getElementById('pair2Btn').classList.toggle('on', pair2);
+      document.getElementById('pairWrap').style.display = pair2 ? '' : 'none';
+      pair2Total();
+    });
+    document.getElementById('corpBtn').addEventListener('click', () => {
+      corp = !corp;
+      document.getElementById('corpBtn').classList.toggle('on', corp);
+      pair2Total();
+    });
+    document.querySelectorAll('#demoPair .addon').forEach(btn => {
+      btn.addEventListener('click', () => { btn.classList.toggle('on'); pair2Total(); });
+    });
+    ['p2frameIn', 'p2lensIn'].forEach(id => {
+      document.getElementById(id).addEventListener('input', pair2Total);
+    });
+
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-ar]').forEach(el => { el.textContent = el.getAttribute('data-' + lang); });
+      document.getElementById('langBtn').textContent = lang === 'ar' ? 'EN' : 'عربي';
+      if (typeof demoTotal === 'function') demoTotal();
+      if (typeof pair2Total === 'function') pair2Total();
+    }
+    const snaps = [...document.querySelectorAll('[data-snap]')];
+    let snapIndex = 0;
+    let snapping = false;
+
+    function currentSnap() {
+      const y = window.scrollY + innerHeight * 0.28;
+      let best = 0, dist = Infinity;
+      snaps.forEach((el, i) => {
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        const d = Math.abs(top - y);
+        if (d < dist) { dist = d; best = i; }
+      });
+      return best;
+    }
+
+    function goSnap(i) {
+      snapIndex = Math.max(0, Math.min(snaps.length - 1, i));
+      snapping = true;
+      lenis.scrollTo(snaps[snapIndex], {
+        offset: snaps[snapIndex].classList.contains('proj-row') ? -8 : -20,
+        duration: 2.45,
+        easing: (t) => 1 - Math.pow(1 - t, 3.2),
+        onComplete: () => { snapping = false; }
+      });
+      setTimeout(() => { snapping = false; }, 700);
+    }
+
+    addEventListener('keydown', (e) => {
+      const down = e.key === 'ArrowDown' || e.key === 'PageDown';
+      const up = e.key === 'ArrowUp' || e.key === 'PageUp';
+      if (!down && !up) return;
+      if (e.target.closest('input, select, textarea')) return;
+      e.preventDefault();
+      if (e.repeat || snapping) return;
+      snapIndex = currentSnap();
+      goSnap(snapIndex + (down ? 1 : -1));
+    });
+
+    document.getElementById('langBtn').onclick = () => { lang = lang === 'ar' ? 'en' : 'ar'; applyLang(); };
+    document.getElementById('startBtn').onclick = () => goSnap(1);
+    document.querySelectorAll('.nav-mid a, [data-go]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', (e) => {
+        const id = el.getAttribute('href') || ('#' + el.dataset.go);
+        if (!id || id === '#') return;
+        e.preventDefault();
+        lenis.scrollTo(id, { offset: -20 });
+      });
+    });
+
+    const pipes = [...document.querySelectorAll('#pipes .pipe')];
+    let p = 0;
+    setInterval(() => { pipes.forEach((el, k) => el.classList.toggle('on', k === p)); p = (p + 1) % pipes.length; }, 1600);
+  </script>
+</body>
+</html>
