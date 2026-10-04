@@ -384,7 +384,7 @@
         <h3>الأشهر المجمّعة (<span id="monthsCount">0</span>)</h3>
         <div style="overflow-x:auto;">
             <table style="min-width:800px;margin:0;">
-                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th><th>مرتجعات</th></tr></thead>
+                <thead><tr><th>الشهر</th><th>قبل الخصم</th><th>بعد الخصم</th><th>بعد المرتجع</th><th>TKT</th><th>ATV</th></tr></thead>
                 <tbody id="monthsTableBody"></tbody>
             </table>
         </div>
@@ -455,12 +455,12 @@
     var STORAGE_KEY = 'lensme_branch_monthly_kpi_v3';
     var MONTH_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     var CATEGORY_AR = {
-        'Optical Frames': 'نظارات طبية',
-        'Medical Glasses': 'نظارات طبية',
+        'Optical Frames': 'إطارات طبية',
+        'Medical Glasses': 'إطارات طبية',
         'Sunglasses': 'نظارات شمسية',
         'Clear CL': 'عدسات شفافة',
         'Colored CL': 'عدسات ملونة',
-        'Finished Lenses': 'نظارات طبية',
+        'Finished Lenses': 'عدسات طبية',
         'LW Lab Lens': 'عدسات جاهزة',
         'LW Ready Made': 'عدسات جاهزة',
         'Solutions': 'محاليل',
@@ -551,16 +551,75 @@
 
     function normalizeCategory(name) {
         var n = String(name || '').trim();
-        if (/optical\s*frames|إطارات|اطارات/i.test(n)) return 'Medical Glasses';
-        if (/lab\s*lens|ready\s*made|finished\s*lens|عدسات\s*lab|عدسات\s*جاهز/i.test(n)) return 'Medical Glasses';
-        if (n === 'Optical Frames' || n === 'Finished Lenses' || n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Medical Glasses';
+        if (/optical\s*frames|إطارات|اطارات/i.test(n) || n === 'Medical Glasses') return 'Optical Frames';
+        if (/lab\s*lens|ready\s*made|finished\s*lens|عدسات\s*lab|عدسات\s*جاهز/i.test(n)) return 'Finished Lenses';
+        if (n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Finished Lenses';
         return n || 'Other';
     }
 
     function canonicalCategory(name) {
-        var n = normalizeCategory(name);
-        if (n === 'Optical Frames' || n === 'Finished Lenses' || n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Medical Glasses';
-        return n;
+        return normalizeCategory(name);
+    }
+
+    function lensCompany(brand) {
+        var s = String(brand || '').toLowerCase();
+        var compact = s.replace(/[^a-z0-9]+/g, '');
+        var rules = [
+            ['Privo', /privo/],
+            ['Essilor', /essilor|eassilor|easilor|varilux|crizal/],
+            ['Zeiss', /zeiss|ziess|zies|carlzeiss/],
+            ['Hoya', /hoya/],
+            ['Rodenstock', /rodenstock/],
+            ['Shamir', /shamir/]
+        ];
+        for (var i = 0; i < rules.length; i++) {
+            if (rules[i][1].test(compact)) return rules[i][0];
+        }
+        return '';
+    }
+
+    function rebuildCat(key, label, items) {
+        var sales = 0, refunds = 0, qty = 0;
+        (items || []).forEach(function (it) {
+            sales += it.sales || 0;
+            refunds += it.refunds || 0;
+            qty += it.qty || 0;
+        });
+        var sorted = (items || []).slice().sort(function (a, b) {
+            return (b.qty - a.qty) || (b.net - a.net);
+        });
+        return {
+            key: key, label: label,
+            sales: sales, netAfterRefund: Math.max(0, sales - refunds),
+            invoices: 0, refunds: refunds, refundInvoices: 0, qty: qty,
+            items: sorted
+        };
+    }
+
+    function splitFramesAndLensBrands(ranked) {
+        var out = [];
+        var lensBuckets = {};
+        function addLens(name, item) {
+            if (!lensBuckets[name]) lensBuckets[name] = [];
+            lensBuckets[name].push(item);
+        }
+        ranked.forEach(function (c) {
+            var isFrame = c.key === 'Optical Frames' || c.key === 'Medical Glasses';
+            var isLens = c.key === 'Finished Lenses';
+            if (!isFrame && !isLens) { out.push(c); return; }
+            var frames = [];
+            (c.items || []).forEach(function (it) {
+                var company = lensCompany(it.brand);
+                if (isFrame && !company) frames.push(it);
+                else addLens(company || String(it.brand || '').trim() || 'عدسات طبية', it);
+            });
+            if (frames.length) out.push(rebuildCat('Optical Frames', 'إطارات طبية', frames));
+        });
+        Object.keys(lensBuckets).forEach(function (name) {
+            var label = name === 'عدسات طبية' ? 'عدسات طبية' : ('عدسات طبية · ' + name);
+            out.push(rebuildCat('Lens:' + name, label, lensBuckets[name]));
+        });
+        return out;
     }
 
     function googleSearchUrl(brand, model) {
@@ -919,7 +978,7 @@
 
     function rankCategories(categories) {
         var folded = foldCategories(categories);
-        return Object.keys(folded).map(function (key) {
+        var ranked = Object.keys(folded).map(function (key) {
             var c = folded[key];
             var sales = c.sales || 0;
             var refunds = c.refunds || 0;
@@ -945,10 +1004,16 @@
                 refundInvoices: c.refundInvoices || 0, qty: c.qty || 0,
                 items: items
             };
-        }).sort(function (a, b) {
+        });
+        return splitFramesAndLensBrands(ranked).sort(function (a, b) {
             var aLast = a.key === 'Solutions';
             var bLast = b.key === 'Solutions';
             if (aLast !== bLast) return aLast ? 1 : -1;
+            var aLens = a.key.indexOf('Lens:') === 0;
+            var bLens = b.key.indexOf('Lens:') === 0;
+            if (a.key === 'Optical Frames' && bLens) return -1;
+            if (b.key === 'Optical Frames' && aLens) return 1;
+            if (aLens && bLens) return (b.qty - a.qty) || (b.netAfterRefund - a.netAfterRefund);
             return (b.qty - a.qty) || (b.netAfterRefund - a.netAfterRefund);
         });
     }
@@ -974,7 +1039,7 @@
         $('monthsCount').textContent = String(list.length);
         var body = $('monthsTableBody');
         if (!list.length) {
-            body.innerHTML = '<tr><td colspan="7" style="color:#999;">ارفع الملفات واضغط تحليل</td></tr>';
+            body.innerHTML = '<tr><td colspan="6" style="color:#999;">ارفع الملفات واضغط تحليل</td></tr>';
             return;
         }
         body.innerHTML = list.map(function (m) {
@@ -984,8 +1049,7 @@
                 '<td dir="ltr"><strong>' + money(k.net) + '</strong></td>' +
                 '<td dir="ltr" style="color:var(--lensme-primary);font-weight:bold;">' + money(k.netAfterRefund) + '</td>' +
                 '<td dir="ltr">' + num(m.invoices) + '</td>' +
-                '<td dir="ltr">' + (k.atvAfterRefund ? money(k.atvAfterRefund, 1) : '—') + '</td>' +
-                '<td dir="ltr">' + num(m.refundCount) + '</td></tr>';
+                '<td dir="ltr">' + (k.atvAfterRefund ? money(k.atvAfterRefund, 1) : '—') + '</td></tr>';
         }).join('');
     }
 
@@ -1957,13 +2021,11 @@
             return '<tr><td>' + weekRangeLabel(w.week) + '</td>' +
                 '<td dir="ltr"><strong>' + money(w.netAfterRefund) + '</strong></td>' +
                 '<td dir="ltr">' + money(w.discount || 0) + '</td>' +
-                '<td dir="ltr">' + money(w.refundAmount) + '</td>' +
-                '<td dir="ltr">' + num(w.invoices) + '</td>' +
-                '<td dir="ltr">' + num(w.refundCount || 0) + '</td></tr>';
+                '<td dir="ltr">' + num(w.invoices) + '</td></tr>';
         }).join('');
         box.innerHTML = bars +
             '<div style="overflow-x:auto;margin-top:16px;"><table class="mtd-table" style="min-width:720px;margin:0;"><thead><tr>' +
-            '<th>الأسبوع</th><th>صافي المبيعات NET</th><th>الخصم</th><th>المرتجعات</th><th>الفواتير</th><th>فواتير المرتجع</th>' +
+            '<th>الأسبوع</th><th>صافي المبيعات NET</th><th>الخصم</th><th>الفواتير</th>' +
             '</tr></thead><tbody>' + tableRows + '</tbody></table></div>';
     }
 
@@ -2269,7 +2331,7 @@
         if (!box) return;
         lastBrandRows = [];
         var groups = [
-            { key: 'Medical Glasses', title: 'الطبي' },
+            { key: 'Optical Frames', title: 'الإطارات الطبية' },
             { key: 'Sunglasses', title: 'الشمسي' }
         ];
         var html = groups.map(function (g) {
@@ -2282,6 +2344,18 @@
             return '<div class="month-cat-block"><h4>ماركات ' + g.title + '</h4><div class="pair-grid">' +
                 extremeTable(ends.top, 'أعلى 5 مبيعاً', false) +
                 extremeTable(ends.bottom, 'أقل 5 مبيعاً', true) +
+                '</div></div>';
+        }).join('');
+        html += ranked.filter(function (c) { return c.key.indexOf('Lens:') === 0; }).map(function (c) {
+            var models = aggregateBy((c.items || []).map(function (it) {
+                return { model: it.model || it.name, sales: it.sales, refunds: it.refunds, qty: it.qty, net: it.net };
+            }), 'model');
+            var ends = topBottomRows(models, 5, 'name');
+            ends.top.forEach(function (r, i) { lastBrandRows.push({ group: c.label, side: 'أعلى', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            ends.bottom.forEach(function (r, i) { lastBrandRows.push({ group: c.label, side: 'أقل', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            return '<div class="month-cat-block"><h4>' + escapeHtml(c.label) + '</h4><div class="pair-grid">' +
+                extremeTable(ends.top, 'أعلى 5 موديلات', false) +
+                extremeTable(ends.bottom, 'أقل 5 موديلات', true) +
                 '</div></div>';
         }).join('');
         box.innerHTML = html;
@@ -2403,7 +2477,6 @@
             { l: 'المبيعات الصافية', n: money(sumAfterRefund), s: '' },
             { l: 'TKT', n: num(sumInv), s: 'عدد الفواتير' },
             { l: 'متوسط الفاتورة', n: sumInv ? money(branchAtv) : '—', s: 'ATV' },
-            { l: 'المرتجعات', n: money(sumRefAmt), s: num(sumRefCnt) + ' فاتورة' },
             { l: 'الخصومات', n: money(sumDisc), s: pct(discPct) },
             { l: 'التارقت', n: branchTarget ? money(branchTarget) : '—', s: '' },
             { l: 'تحقيق التارقت', n: branchTarget ? pct(achievePct) : '—', s: '' }
@@ -2464,7 +2537,7 @@
         renderProducts(list);
 
         var insights = [
-            'صافي المبيعات <b>' + money(sumAfterRefund) + '</b> · مرتجعات <b>' + money(sumRefAmt) + '</b> · خصومات <b>' + money(sumDisc) + '</b>.',
+            'صافي المبيعات <b>' + money(sumAfterRefund) + '</b> · خصومات <b>' + money(sumDisc) + '</b>.',
             'التارقت <b>' + (branchTarget ? money(branchTarget) : '—') + '</b> · التحقيق <b>' + (branchTarget ? pct(achievePct) : '—') + '</b> · حتى يوم <b>' + daysCovered + '</b>.',
             'عدد الموظفين: <b>' + (lastStaffRows.length || 0) + '</b>.',
             lastMixInsight
@@ -2484,22 +2557,22 @@
         if (!lastRows.length) { alert('اعرض التقرير أولاً'); return; }
         if (typeof XLSX === 'undefined') { alert('مكتبة Excel لم تُحمَّل. تأكد من الإنترنت ثم أعد فتح الصفحة'); return; }
         try {
-        var kpi = [['الفترة','المبيعات الصافية','متوسط الفاتورة','الخصومات','المرتجعات','التارقت','تحقيق %']];
+        var kpi = [['الفترة','المبيعات الصافية','متوسط الفاتورة','الخصومات','التارقت','تحقيق %']];
         lastRows.forEach(function (r) {
-            kpi.push([r.month, r.netAfterRefund, r.atv != null && isFinite(Number(r.atv)) ? +Number(r.atv).toFixed(2) : '', r.discount, r.refundAmount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
+            kpi.push([r.month, r.netAfterRefund, r.atv != null && isFinite(Number(r.atv)) ? +Number(r.atv).toFixed(2) : '', r.discount, r.target || 0, r.achievePct != null ? +Number(r.achievePct).toFixed(1) : '']);
         });
-        var cats = [['الشهر','#','الفئة / الصنف','كمية','مبيعات','بعد المرتجع','مرتجعات']];
+        var cats = [['الشهر','#','الفئة / الصنف','كمية','مبيعات','بعد المرتجع']];
         lastCategoryRows.forEach(function (r) {
-            cats.push([r.month, r.rank, r.category, r.qty || '', r.sales, r.netAfterRefund, r.refunds || 0]);
+            cats.push([r.month, r.rank, r.category, r.qty || '', r.sales, r.netAfterRefund]);
         });
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpi), 'KPI');
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(cats), 'Categories');
         if (lastMtdRows.length) {
-            var mtd = [['الشهر','الفترة','بعد الخصم','بعد المرتجع','مرتجعات','فواتير','ATV','مقارنة %']];
+            var mtd = [['الشهر','الفترة','بعد الخصم','بعد المرتجع','فواتير','ATV','مقارنة %']];
             lastMtdRows.forEach(function (r) {
                 var atv = Number(r.atv);
-                mtd.push([r.month, r.period, r.net, r.netAfterRefund, r.refundAmount, r.invoices, isFinite(atv) ? +atv.toFixed(2) : '', r.vsRef != null ? +r.vsRef.toFixed(2) : '']);
+                mtd.push([r.month, r.period, r.net, r.netAfterRefund, r.invoices, isFinite(atv) ? +atv.toFixed(2) : '', r.vsRef != null ? +r.vsRef.toFixed(2) : '']);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mtd), 'MTD Compare');
         }
@@ -2518,9 +2591,9 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mm), 'Mgr Monthly');
         }
         if (lastWeekRows.length) {
-            var wk = [['الأسبوع','صافي NET','الخصم','المرتجعات','الفواتير','فواتير المرتجع']];
+            var wk = [['الأسبوع','صافي NET','الخصم','الفواتير']];
             lastWeekRows.forEach(function (w) {
-                wk.push(['أسبوع ' + w.week, w.netAfterRefund, w.discount || 0, w.refundAmount, w.invoices, w.refundCount || 0]);
+                wk.push(['أسبوع ' + w.week, w.netAfterRefund, w.discount || 0, w.invoices]);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wk), 'Weeks');
         }
