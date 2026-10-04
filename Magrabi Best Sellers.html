@@ -158,7 +158,22 @@
             text-decoration: underline;
         }
         .cat-link.is-open { color: #1e1505; }
-        .share-bar { height: 8px; background: #f6edd6; border-radius: 6px; overflow: hidden; margin-top: 6px; }
+        .search-box { margin: 0 0 16px; }
+        .search-box input {
+            width: 100%; padding: 14px 16px; border: 1px solid var(--border-strong);
+            border-radius: 12px; font: inherit; font-size: 1em; background: #fff;
+        }
+        .search-box input:focus { outline: 2px solid var(--magrabi-gold); border-color: var(--magrabi-primary); }
+        .cat-tile {
+            flex: 1 0 150px; min-width: 150px; min-height: 108px;
+            background: #fff; border: 1px solid var(--border-strong); border-radius: 16px;
+            padding: 18px 12px; text-align: center; cursor: pointer; font: inherit; color: var(--magrabi-dark);
+        }
+        .cat-tile strong { display: block; font-size: 1.15em; letter-spacing: 0.8px; }
+        .cat-tile em { display: block; margin-top: 4px; font-style: normal; color: #888; font-size: 0.78em; }
+        .cat-tile span { display: block; margin-top: 10px; color: var(--magrabi-primary); font-weight: 800; direction: ltr; }
+        .cat-tile.is-open, .cat-tile:hover { background: var(--magrabi-primary); color: #fff; border-color: var(--magrabi-primary); }
+        .cat-tile.is-open em, .cat-tile:hover em, .cat-tile.is-open span, .cat-tile:hover span { color: #fff; }
         .share-fill { height: 100%; background: var(--magrabi-primary); }
         .brand-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
         .brand-btn {
@@ -232,15 +247,10 @@
         <div class="sub">الأكثر مبيعاً — البراند واسم الصنف</div>
     </header>
 
-    <div class="box hide-on-print">
-        <h2>رفع ملف المبيعات</h2>
-        <p class="hint">ارفع Sales Summary (POS). الترتيب حسب الكمية. عمود الأرتيكل هو رقم الصنف (Item Number). الضغط على اسم الصنف يفتح صور قوقل.</p>
-        <label class="file-upload-wrapper" id="zoneSales" for="excelSales">
-            <span class="upload-title">Sales Summary</span>
-            <span class="upload-hint">.xls أو .xlsx — Magrabi Sales Summary Report</span>
-            <input type="file" id="excelSales" accept=".xlsx,.xls,.xml" onchange="handleFile(event)">
-        </label>
-        <button type="button" class="btn" id="analyzeBtn" onclick="analyze()">عرض الأفضل مبيعاً</button>
+    <div class="box hide-on-print" id="loadBox">
+        <h2>تقرير المبيعات</h2>
+        <p class="hint" id="loadStatus">جاري سحب البيانات من مغربي...</p>
+        <button type="button" class="btn" onclick="loadReport()">تحديث من الرابط</button>
     </div>
 
     <div class="box" id="reportOutput">
@@ -251,6 +261,12 @@
             </div>
             <div id="emptyState"></div>
             <div id="resultBody" style="display:none;">
+                <div class="search-box hide-on-print">
+                    <input type="search" id="itemSearch" placeholder="ابحث برقم الأرتيكل أو اسم البراند" oninput="runSearch()" autocomplete="off">
+                </div>
+                <div id="searchResults"></div>
+                <div class="cat-tiles" id="catTiles"></div>
+                <div id="catNavDetail"></div>
                 <div class="kpi-grid" id="kpiGrid"></div>
                 <div id="heroBest"></div>
                 <h3>التقرير الإداري</h3>
@@ -293,6 +309,7 @@
         'Other': 'أخرى'
     };
 
+    var REPORT_XLS = 'https://appsc.magrabi.com/MagrabiPOS-Reports/ReportInfo?r=6f6f3a410c666d7d6f7adc796845844752484fff5225676bd2f65f4270e02856ed53a7b71dc05d46ac5d2bf3a5d9946fa32fba8575cec528c6d6a19d0e16e5e98d3ccf1fb2cd1ddd5da565ab4c9e3ca17b4d9aafab33bfc94e858dbec3ceabda97234b179bbef1140be4da12aa06a6bded089f7f6a8620aa&__format=xls';
     var pendingRows = null;
     var pendingName = '';
     var lastItems = [];
@@ -300,7 +317,10 @@
     var categoryGroups = [];
     var openCategoryIdx = -1;
     var brandGroups = [];
-    var openBrandIdx = -1;
+    var catNav = [];
+    var catBrandNav = [];
+    var openCatNavIdx = -1;
+    var openCatBrandIdx = -1;
 
     function $(id) { return document.getElementById(id); }
 
@@ -510,19 +530,142 @@
         });
     }
 
-    function handleFile(ev) {
-        var file = ev.target.files && ev.target.files[0];
-        if (!file) return;
-        pendingName = file.name;
-        $('zoneSales').classList.add('has-file');
-        readFile(file).then(function (rows) {
-            pendingRows = rows;
-            toast('تم تحميل ' + file.name);
+    function loadReport() {
+        var status = $('loadStatus');
+        if (status) status.textContent = 'جاري سحب التقرير من مغربي...';
+        var local = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+        var url = local ? '/sales-report.xls' : REPORT_XLS;
+        if (!local && location.protocol === 'file:') {
+            if (status) status.textContent = 'شغّل «فتح التقرير.bat» حتى تُسحب البيانات من رابط مغربي. المتصفح يمنع الصفحة من قراءة الرابط مباشرة.';
+            return;
+        }
+        fetch(url, { cache: 'no-store' }).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.arrayBuffer();
+        }).then(function (buf) {
+            if (typeof XLSX === 'undefined') throw new Error('مكتبة Excel لم تُحمَّل');
+            var wb = XLSX.read(buf, { type: 'array', cellDates: true });
+            pendingRows = sheetToRows(wb);
+            pendingName = 'POS_SALES_SUMRY2.xls';
             analyze();
-        }).catch(function () {
-            pendingRows = null;
-            toast('تعذّر قراءة الملف');
+            if (status) status.textContent = 'تم سحب التقرير من رابط مغربي.';
+        }).catch(function (err) {
+            if (status) status.textContent = 'تعذر سحب التقرير. ' + (err && err.message ? err.message : '') + (local ? '' : ' شغّل «فتح التقرير.bat».');
         });
+    }
+
+    function runSearch() {
+        var box = $('searchResults');
+        var input = $('itemSearch');
+        if (!box) return;
+        var q = String(input && input.value || '').trim().toLowerCase();
+        if (!q) { box.innerHTML = ''; return; }
+        var hits = lastItems.filter(function (it) {
+            var blob = [it.itemNo, it.brand, it.full, it.article, it.category].join(' ').toLowerCase();
+            return blob.indexOf(q) !== -1;
+        });
+        if (!hits.length) {
+            box.innerHTML = '<div class="empty-note">لا توجد نتائج لـ <b>' + escapeHtml(q) + '</b></div>';
+            return;
+        }
+        var rows = hits.map(function (it, i) { return itemRow(it, i + 1, ''); }).join('');
+        box.innerHTML = '<div class="month-cat-block"><h4>نتائج البحث · ' + hits.length + '</h4>' +
+            '<table class="cat-rank-table"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+            rows + '</tbody></table></div>';
+    }
+
+    function catBoxTitle(key) {
+        var k = String(key || '');
+        if (/sunglass|شمس/i.test(k)) return 'SUNGLASSES';
+        if (/frame|إطار/i.test(k)) return 'FRAMES';
+        if (/service|خدم/i.test(k)) return 'SERVICES';
+        if (/contact|لاصق/i.test(k)) return 'CONTACT LENSES';
+        if (/lens|عدس/i.test(k)) return 'LENSES';
+        if (/solution|محلول/i.test(k)) return 'SOLUTIONS';
+        if (/accessor|إكسسوار/i.test(k)) return 'ACCESSORIES';
+        return k.toUpperCase() || 'OTHER';
+    }
+
+    function renderCatTiles(items) {
+        var groups = {};
+        var order = [];
+        items.forEach(function (it) {
+            var key = it.category || 'Other';
+            if (!groups[key]) { groups[key] = []; order.push(key); }
+            groups[key].push(it);
+        });
+        order.sort(function (a, b) {
+            var qty = function (key) { return groups[key].reduce(function (s, it) { return s + it.qty; }, 0); };
+            return qty(b) - qty(a);
+        });
+        catNav = order.map(function (key) {
+            var qty = groups[key].reduce(function (s, it) { return s + it.qty; }, 0);
+            return { key: key, label: catLabel(key), title: catBoxTitle(key), items: groups[key], qty: qty };
+        });
+        openCatNavIdx = -1;
+        openCatBrandIdx = -1;
+        catBrandNav = [];
+        return catNav.map(function (g, i) {
+            return '<button type="button" class="cat-tile" id="catTile' + i + '" onclick="openCatNav(' + i + ')">' +
+                '<strong>' + escapeHtml(g.title) + '</strong><em>' + escapeHtml(g.label) + '</em><span>' + num(g.qty) + '</span></button>';
+        }).join('');
+    }
+
+    function brandBlocksHtml(showAllIdx) {
+        return catBrandNav.map(function (b, i) {
+            var list = showAllIdx === i ? b.items : b.items.slice(0, 3);
+            var rows = list.map(function (it, n) { return itemRow(it, n + 1, ''); }).join('');
+            var note = b.items.length > 3 && showAllIdx !== i ? ' · أفضل 3' : '';
+            return '<div class="month-cat-block"><h4><button type="button" class="cat-link' + (showAllIdx === i ? ' is-open' : '') + '" onclick="openCatBrand(' + i + ')">' +
+                escapeHtml(b.label) + '</button>' + note + ' · ' + b.items.length + ' صنف · كمية ' + num(b.qty) + '</h4>' +
+                '<table class="cat-rank-table"><thead><tr><th>#</th><th>البراند</th><th>الأرتيكل</th><th>اسم الصنف</th><th>كمية</th><th>مبيعات</th><th>صافي</th></tr></thead><tbody>' +
+                rows + '</tbody></table></div>';
+        }).join('');
+    }
+
+    function openCatNav(idx) {
+        var box = $('catNavDetail');
+        document.querySelectorAll('.cat-tile').forEach(function (el) { el.classList.remove('is-open'); });
+        if (!box || !catNav[idx]) return;
+        if (openCatNavIdx === idx) {
+            box.innerHTML = '';
+            openCatNavIdx = -1;
+            openCatBrandIdx = -1;
+            catBrandNav = [];
+            return;
+        }
+        var cat = catNav[idx];
+        var brands = {};
+        var order = [];
+        cat.items.forEach(function (it) {
+            var key = String(it.brand || '').trim() || '—';
+            if (!brands[key]) { brands[key] = []; order.push(key); }
+            brands[key].push(it);
+        });
+        order.sort(function (a, b) {
+            var qty = function (key) { return brands[key].reduce(function (s, it) { return s + it.qty; }, 0); };
+            return qty(b) - qty(a);
+        });
+        catBrandNav = order.map(function (key) {
+            var qty = brands[key].reduce(function (s, it) { return s + it.qty; }, 0);
+            return { key: key, label: key === '—' ? 'بدون براند' : key, items: brands[key], qty: qty };
+        });
+        openCatNavIdx = idx;
+        openCatBrandIdx = -1;
+        var tile = $('catTile' + idx);
+        if (tile) tile.classList.add('is-open');
+        box.innerHTML = '<h3>' + escapeHtml(cat.title) + ' · البراندات الأعلى مبيعاً</h3>' + brandBlocksHtml(-1);
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function openCatBrand(idx) {
+        var box = $('catNavDetail');
+        if (!box || !catBrandNav[idx] || openCatNavIdx < 0) return;
+        openCatBrandIdx = openCatBrandIdx === idx ? -1 : idx;
+        var cat = catNav[openCatNavIdx];
+        box.innerHTML = '<h3>' + escapeHtml(cat.title) + ' · البراندات الأعلى مبيعاً</h3>' + brandBlocksHtml(openCatBrandIdx);
+        var blocks = box.querySelectorAll('.month-cat-block');
+        if (openCatBrandIdx >= 0 && blocks[openCatBrandIdx]) blocks[openCatBrandIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function itemRow(it, rank, extraCls) {
@@ -762,7 +905,7 @@
     }
 
     function analyze() {
-        if (!pendingRows) { toast('ارفع ملف Sales Summary أولاً'); return; }
+        if (!pendingRows) { toast('التقرير لم يصل بعد'); return; }
         if (typeof XLSX === 'undefined') { toast('مكتبة Excel لم تُحمَّل'); return; }
         var parsed = parseMagrabi(pendingRows);
         lastItems = parsed.items || [];
@@ -804,6 +947,10 @@
             '<div class="hero-best"><div class="hero-rank">1</div><div><div class="brand">' + escapeHtml(best.brand || '—') +
             ' · ' + escapeHtml(catLabel(best.category)) + '</div><div class="article">' + escapeHtml(best.itemNo || best.article) +
             '</div><div class="meta"><a class="model-link" href="' + googleSearchUrl(best.full || best.article) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(best.full || '') + '</a>' + tintedLink(best) + '</div><div class="meta">' + money(best.sales) + '</div></div><div class="net">' + num(best.qty) + '</div></div>';
+        if ($('itemSearch')) $('itemSearch').value = '';
+        if ($('searchResults')) $('searchResults').innerHTML = '';
+        if ($('catTiles')) $('catTiles').innerHTML = renderCatTiles(lastItems);
+        if ($('catNavDetail')) $('catNavDetail').innerHTML = '';
         if ($('mgmtReport')) $('mgmtReport').innerHTML = renderManagement(lastItems);
         if ($('brandButtons')) $('brandButtons').innerHTML = '';
         if ($('brandDetail')) $('brandDetail').innerHTML = '';
@@ -845,7 +992,7 @@
         XLSX.writeFile(wb, 'Magrabi_Best_Sellers.xlsx');
     }
 
-    window.handleFile = handleFile;
+    window.loadReport = loadReport;
     window.analyze = analyze;
     window.revealNext = revealNext;
     window.openCategory = openCategory;
@@ -867,10 +1014,18 @@
         panel.style.display = 'block';
     }
 
+    window.openCatNav = openCatNav;
+    window.runSearch = runSearch;
+    window.openCatBrand = openCatBrand;
     window.openBrand = openBrand;
     window.toggleBrandSort = toggleBrandSort;
     window.exportExcel = exportExcel;
     window.__parseRows = parseMagrabi;
+    function bootReport() {
+        if (typeof XLSX === 'undefined') { setTimeout(bootReport, 200); return; }
+        loadReport();
+    }
+    bootReport();
 })();
 </script>
 </body>
