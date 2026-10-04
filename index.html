@@ -565,6 +565,7 @@
         var s = String(brand || '').toLowerCase();
         var compact = s.replace(/[^a-z0-9]+/g, '');
         var rules = [
+            ['Kodak', /kodak/],
             ['Privo', /privo/],
             ['Essilor', /essilor|eassilor|easilor|varilux|crizal/],
             ['Zeiss', /zeiss|ziess|zies|carlzeiss/],
@@ -598,11 +599,7 @@
 
     function splitFramesAndLensBrands(ranked) {
         var out = [];
-        var lensBuckets = {};
-        function addLens(name, item) {
-            if (!lensBuckets[name]) lensBuckets[name] = [];
-            lensBuckets[name].push(item);
-        }
+        var lensItems = [];
         ranked.forEach(function (c) {
             var isFrame = c.key === 'Optical Frames' || c.key === 'Medical Glasses';
             var isLens = c.key === 'Finished Lenses';
@@ -611,14 +608,17 @@
             (c.items || []).forEach(function (it) {
                 var company = lensCompany(it.brand);
                 if (isFrame && !company) frames.push(it);
-                else addLens(company || String(it.brand || '').trim() || 'عدسات طبية', it);
+                else {
+                    lensItems.push({
+                        name: it.name, brand: company || it.brand || 'بدون ماركة', model: it.model || '',
+                        qty: it.qty || 0, sales: it.sales || 0, refunds: it.refunds || 0,
+                        color: it.color || '', net: it.net || 0
+                    });
+                }
             });
             if (frames.length) out.push(rebuildCat('Optical Frames', 'إطارات طبية', frames));
         });
-        Object.keys(lensBuckets).forEach(function (name) {
-            var label = name === 'عدسات طبية' ? 'عدسات طبية' : ('عدسات طبية · ' + name);
-            out.push(rebuildCat('Lens:' + name, label, lensBuckets[name]));
-        });
+        if (lensItems.length) out.push(rebuildCat('Finished Lenses', 'عدسات طبية', lensItems));
         return out;
     }
 
@@ -1009,11 +1009,6 @@
             var aLast = a.key === 'Solutions';
             var bLast = b.key === 'Solutions';
             if (aLast !== bLast) return aLast ? 1 : -1;
-            var aLens = a.key.indexOf('Lens:') === 0;
-            var bLens = b.key.indexOf('Lens:') === 0;
-            if (a.key === 'Optical Frames' && bLens) return -1;
-            if (b.key === 'Optical Frames' && aLens) return 1;
-            if (aLens && bLens) return (b.qty - a.qty) || (b.netAfterRefund - a.netAfterRefund);
             return (b.qty - a.qty) || (b.netAfterRefund - a.netAfterRefund);
         });
     }
@@ -2346,18 +2341,16 @@
                 extremeTable(ends.bottom, 'أقل 5 مبيعاً', true) +
                 '</div></div>';
         }).join('');
-        html += ranked.filter(function (c) { return c.key.indexOf('Lens:') === 0; }).map(function (c) {
-            var models = aggregateBy((c.items || []).map(function (it) {
-                return { model: it.model || it.name, sales: it.sales, refunds: it.refunds, qty: it.qty, net: it.net };
-            }), 'model');
-            var ends = topBottomRows(models, 5, 'name');
-            ends.top.forEach(function (r, i) { lastBrandRows.push({ group: c.label, side: 'أعلى', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
-            ends.bottom.forEach(function (r, i) { lastBrandRows.push({ group: c.label, side: 'أقل', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
-            return '<div class="month-cat-block"><h4>' + escapeHtml(c.label) + '</h4><div class="pair-grid">' +
-                extremeTable(ends.top, 'أعلى 5 موديلات', false) +
-                extremeTable(ends.bottom, 'أقل 5 موديلات', true) +
-                '</div></div>';
-        }).join('');
+        var lensCat = null;
+        ranked.forEach(function (c) { if (c.key === 'Finished Lenses') lensCat = c; });
+        if (lensCat) {
+            var companies = aggregateBy(lensCat.items, 'brand');
+            var winner = companies[0];
+            companies.forEach(function (r, i) { lastBrandRows.push({ group: 'عدسات طبية', side: 'شركة', rank: i + 1, name: r.name, qty: r.qty, net: r.net }); });
+            html += '<div class="month-cat-block"><h4>العدسات الطبية' +
+                (winner ? ' · الأعلى مبيعاً: ' + escapeHtml(winner.name) : '') + '</h4>' +
+                extremeTable(companies, 'ترتيب الشركات حسب الكمية', false) + '</div>';
+        }
         box.innerHTML = html;
     }
 
