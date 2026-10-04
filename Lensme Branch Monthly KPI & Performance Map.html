@@ -488,10 +488,12 @@
     var lastColorRows = [];
     var lastMixInsight = '';
     var STAFF_CAT_COLS = [
-        { label: 'نظارات طبية', cats: ['Medical Glasses', 'Optical Frames', 'Finished Lenses', 'LW Lab Lens', 'LW Ready Made'], asQty: true },
+        { label: 'إطارات طبية', cats: ['Staff Frames'], asQty: true },
+        { label: 'عدسات طبية', cats: ['Staff Medical Lenses'], asQty: true },
+        { label: 'عدسات طلبية', cats: ['Staff Order Lenses'], asQty: true },
         { label: 'نظارات شمسية', cats: ['Sunglasses'], asQty: true },
         { label: 'عدسات ملونة', cats: ['Colored CL'], asQty: true },
-        { label: 'عدسات طبية', cats: ['Clear CL'] }
+        { label: 'عدسات شفافة', cats: ['Clear CL'] }
     ];
     var STAFF_ROLES = ['Optician', 'Sales Associate', 'Optometrist'];
     var ROLE_SORT = { 'Optician': 0, 'Sales Associate': 1, 'Optometrist': 2 };
@@ -576,6 +578,18 @@
         for (var i = 0; i < rules.length; i++) {
             if (rules[i][1].test(compact)) return rules[i][0];
         }
+        return '';
+    }
+
+    function staffMedicalBucket(rawType, brand) {
+        var n = String(rawType || '').replace(/&amp;/g, '&').trim();
+        var low = n.toLowerCase();
+        if (/(\brx\b|\bstock\b|lab\s*lens|ready\s*made|lw\s*lab|lw\s*ready|تصنيع|جاهز|طلبي)/i.test(low) ||
+            n === 'LW Lab Lens' || n === 'LW Ready Made') return 'Staff Order Lenses';
+        if (/finished\s*lens/i.test(low)) return 'Staff Medical Lenses';
+        var frame = /optical\s*frames|إطارات|اطارات/i.test(n) || n === 'Medical Glasses';
+        if (frame && lensCompany(brand)) return 'Staff Medical Lenses';
+        if (frame) return 'Staff Frames';
         return '';
     }
 
@@ -1193,13 +1207,17 @@
 
     function emptyCatSales() { return { sales: 0, refunds: 0, qty: 0 }; }
 
-    function bumpStaffCat(staff, typeName, qty, total, isRefund) {
+    function bumpStaffCat(staff, typeName, qty, total, isRefund, rawType, brand) {
         if (!staff.cats) staff.cats = {};
-        var key = normalizeCategory(typeName);
-        if (!staff.cats[key]) staff.cats[key] = emptyCatSales();
-        var c = staff.cats[key];
-        if (isRefund) c.refunds += Math.abs(total);
-        else { c.sales += total; c.qty += Math.abs(qty); }
+        var keys = [normalizeCategory(typeName)];
+        var bucket = staffMedicalBucket(rawType || typeName, brand);
+        if (bucket) keys.push(bucket);
+        keys.forEach(function (key) {
+            if (!staff.cats[key]) staff.cats[key] = emptyCatSales();
+            var c = staff.cats[key];
+            if (isRefund) c.refunds += Math.abs(total);
+            else { c.sales += total; c.qty += Math.abs(qty); }
+        });
     }
 
     function mergeStaffCats(target, source) {
@@ -1569,7 +1587,7 @@
     }
 
     function parseSalesSummaryRows(rows, invMap, fallbackYm) {
-        var buckets = {}, currentType = '';
+        var buckets = {}, currentType = '', rawType = '';
         var idxInvoice = 1, idxRefund = 2, idxSalesman = 3, idxProduct = 4, idxDesc = 5, idxBrand = 6, idxQty = 9, idxDisc = 10, idxTotal = 12;
 
         rows.forEach(function (row) {
@@ -1595,7 +1613,10 @@
             }
             if (rowText.indexOf('type name') !== -1) {
                 var mt = cells.join(' ').match(/Type Name\s*:\s*([^,\|]+)/i);
-                if (mt) currentType = normalizeCategory(mt[1].replace(/&amp;/g, '&').trim());
+                if (mt) {
+                    rawType = mt[1].replace(/&amp;/g, '&').trim();
+                    currentType = normalizeCategory(rawType);
+                }
                 return;
             }
 
@@ -1636,7 +1657,7 @@
                     rs.refunds += Math.abs(total);
                     rs._refundInv[lookup] = true;
                     rs.qty += Math.abs(qty);
-                    bumpStaffCat(rs, typeName, qty, total, true);
+                    bumpStaffCat(rs, typeName, qty, total, true, rawType, cells[idxBrand]);
                 }
             } else {
                 month.discount += disc;
@@ -1651,7 +1672,7 @@
                     var ss = ensureStaff(month.staff, staffRaw);
                     ss.qty += Math.abs(qty);
                     if (invoiceRaw) ss._inv[invoiceRaw] = true;
-                    bumpStaffCat(ss, typeName, qty, total, false);
+                    bumpStaffCat(ss, typeName, qty, total, false, rawType, cells[idxBrand]);
                 }
             }
         });
@@ -2591,11 +2612,16 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wk), 'Weeks');
         }
         if (lastStaffRows.length) {
-            var st = [['#','الموظف','المسمى','مبيعات','فواتير','متوسط الفاتورة','عدد نظارات طبية','عدد نظارات شمسية','عدد عدسات ملونة','عدسات طبية','التارقت الشخصي']];
+            var st = [['#','الموظف','المسمى','مبيعات','فواتير','متوسط الفاتورة']];
+            STAFF_CAT_COLS.forEach(function (col) { st[0].push(col.label); });
+            st[0].push('التارقت الشخصي');
             lastStaffRows.forEach(function (s, idx) {
-                st.push([idx + 1, s.full, s.role || '', s.netAfterRefund, s.invoices, s.invoices ? +(s.netAfterRefund / s.invoices).toFixed(2) : '',
-                    staffCatQty(s, ['Medical Glasses', 'Optical Frames', 'Finished Lenses', 'LW Lab Lens', 'LW Ready Made']), staffCatQty(s, ['Sunglasses']),
-                    staffCatQty(s, ['Colored CL']), staffCatNet(s, ['Clear CL']), s.personalTarget || 0]);
+                var row = [idx + 1, s.full, s.role || '', s.netAfterRefund, s.invoices, s.invoices ? +(s.netAfterRefund / s.invoices).toFixed(2) : ''];
+                STAFF_CAT_COLS.forEach(function (col) {
+                    row.push(col.asQty ? staffCatQty(s, col.cats) : staffCatNet(s, col.cats));
+                });
+                row.push(s.personalTarget || 0);
+                st.push(row);
             });
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(st), 'Staff');
         }
